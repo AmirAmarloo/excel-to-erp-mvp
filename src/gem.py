@@ -110,4 +110,4 @@ if not output_df.empty:
 #    subprocess.run(["git", "push"], check=True)
 #    print("Changes synced with GitHub!")
 #except Exception as e:
-    print(f"Git Push failed: {e}")
+   # print(f"Git Push failed: {e}")
