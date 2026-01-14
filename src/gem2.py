@@ -2,7 +2,7 @@ import pandas as pd
 import yaml
 import os
 
-with open("config/mapping.yaml", "r") as f:
+with open("mappings/mapping.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 df = pd.read_excel(
