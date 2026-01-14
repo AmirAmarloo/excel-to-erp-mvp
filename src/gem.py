@@ -78,7 +78,7 @@ if not missing_columns:
                             errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"The length is more than from {rules['max_length']}"})
                         if "pattern" in rules and not re.match(rules["pattern"], value):
                             row_errors.append("PATTERN_MISMATCH")
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "FORMAT_VIOLATION", "Error_Message": "فرمت مقدار ناصحیح است"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "FORMAT_VIOLATION", "Error_Message": "Format is not correct"})
 
                 except:
                     errors.append({
