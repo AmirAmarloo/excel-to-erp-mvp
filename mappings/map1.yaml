@@ -1,0 +1,31 @@
+source:
+  file: data/sample.xlsx
+  sheet: Sheet1
+
+target:
+  table: staging_invoices
+
+columns:
+  customr_id:
+    target: customer_id
+    type: int
+    required: true
+
+  name:
+    target: customer_name
+    type: string
+    required: true
+    min_length: 3
+    max_length: 50
+
+  amount:
+    target: invoice_amount
+    type: float
+    required: true
+    min_value: 0
+
+  project_code:
+    target: project_code
+    type: string
+    required: false
+    pattern: "^PRJ-[0-9]{3}$"
