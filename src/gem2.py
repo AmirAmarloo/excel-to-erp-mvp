@@ -24,7 +24,12 @@ for index, row in df.iterrows():
         is_required = rules["required"]
 
         if is_required and pd.isna(value):
-            row_errors.append(f"Field {col_name} is required")
+            row_errors.append({"column": col_name,
+                               "error_code": "REQUIRED",
+                               "message": f"{col_name} is required",
+                               "value": value})
+
+            #row_errors.append(f"Field {col_name} is required")
             continue
 
         if not pd.isna(value):
