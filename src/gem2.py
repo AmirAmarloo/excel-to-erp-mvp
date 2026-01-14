@@ -53,9 +53,9 @@ output_df = pd.DataFrame(valid_rows)
 error_df = pd.DataFrame(errors)
 
 if not error_df.empty:
-    error_df.to_excel("validation_errors.xlsx", index=False)
+    error_df.to_excel("data/result/validation_errors.xlsx", index=False)
 
 if not output_df.empty:
-    output_df.to_excel("cleaned_data.xlsx", index=False)
+    output_df.to_excel("data/result/cleaned_data.xlsx", index=False)
 
 print("Process finished.")
