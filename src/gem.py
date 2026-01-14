@@ -4,7 +4,7 @@ import os
 #import subprocess
 import re
 
-with open("config/mapping.yaml", "r") as f:
+with open("config/map1.yaml", "r") as f:
     config = yaml.safe_load(f)
 
 df = pd.read_excel(
