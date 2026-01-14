@@ -30,7 +30,7 @@ for col in config_columns:
             "Row_Number": "Global",
             "Column_Name": col,
             "Error_Type": "COLUMN_MISSING",
-            "Error_Message": f"ستون '{col}' یافت نشد."
+            "Error_Message": f"The '{col}' was not found."
         })
 
 if not missing_columns:
@@ -49,7 +49,7 @@ if not missing_columns:
                     "Row_Number": index + 2,
                     "Column_Name": col_name,
                     "Error_Type": "REQUIRED",
-                    "Error_Message": "مقدار خالی است"
+                    "Error_Message": "The column has no value."
                 })
                 row_errors.append("REQUIRED")
                 continue
@@ -60,22 +60,22 @@ if not missing_columns:
                         value = int(value)
                         if "min_value" in rules and value < rules["min_value"]:
                             row_errors.append("MIN_VALUE")
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"کمتر از حد مجاز {rules['min_value']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"Less than the allowed limit {rules['min_value']}"})
                     
                     elif expected_type == "float":
                         value = float(value)
                         if "min_value" in rules and value < rules["min_value"]:
                             row_errors.append("MIN_VALUE")
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"کمتر از حد مجاز {rules['min_value']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"More than the allowed limit {rules['min_value']}"})
 
                     elif expected_type == "string":
                         value = str(value)
                         if "min_length" in rules and len(value) < rules["min_length"]:
                             row_errors.append("MIN_LENGTH")
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"طول کمتر از {rules['min_length']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"The length is less than from {rules['min_length']}"})
                         if "max_length" in rules and len(value) > rules["max_length"]:
                             row_errors.append("MAX_LENGTH")
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"طول بیشتر از {rules['max_length']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"The length is more than from {rules['max_length']}"})
                         if "pattern" in rules and not re.match(rules["pattern"], value):
                             row_errors.append("PATTERN_MISMATCH")
                             errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Error_Type": "FORMAT_VIOLATION", "Error_Message": "فرمت مقدار ناصحیح است"})
@@ -85,7 +85,7 @@ if not missing_columns:
                         "Row_Number": index + 2,
                         "Column_Name": col_name,
                         "Error_Type": "TYPE_MISMATCH",
-                        "Error_Message": f"باید {expected_type} باشد"
+                        "Error_Message": f"The value should be {expected_type} "
                     })
                     row_errors.append("TYPE_MISMATCH")
                     continue
