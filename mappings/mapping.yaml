@@ -38,5 +38,5 @@ columns:
     target: project_code
     type: string
     required: false
-    pattern: "^PRJ-[0-9]{3}$"  # Regex validation (e.g., PRJ-123)
+    pattern: "^PRJ-[0-9]+$"  # Regex validation (e.g., PRJ-123)
     priority: 3
