@@ -21,6 +21,13 @@ columns:
     max_length: 50
     priority: 2  
 
+  amount:
+    target: invoice_amount
+    type: float      
+    required: true
+    min_value: 0
+    priority: 2
+    
   project_code:
     target: project_code
     type: string
