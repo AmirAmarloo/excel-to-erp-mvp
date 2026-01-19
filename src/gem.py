@@ -7,6 +7,16 @@ import re
 with open("mappings/mapping.yaml", "r") as f:
     config = yaml.safe_load(f)
 
+col_to_check = "customr_id" # نام ستونی که در YAML نوشتی
+
+print(f"--- Debug Info ---")
+print(f"1. Is '{col_to_check}' in Excel? {col_to_check in df.columns}")
+print(f"2. Data types in Excel:\n{df.dtypes}")
+print(f"3. First 5 values of '{col_to_check}':\n{df[col_to_check].head()}")
+print(f"4. Are there any duplicates in Excel for this column? {df[col_to_check].duplicated().any()}")
+print(f"------------------")
+
+
 df = pd.read_excel(
     config["source"]["file"],
     sheet_name=config["source"]["sheet"]
