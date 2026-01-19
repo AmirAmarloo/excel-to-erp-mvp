@@ -49,14 +49,13 @@ for index, row in df.iterrows():
                 else:
                     current_val = str(value).strip()
 
-                # --- Step B: Range Check (This is where 101 should fail) ---
-                # Check min_value for ANY numeric column
+                # --- Step B: Range Check (Min Value) ---
                 if "min_value" in rules:
                     if float(current_val) < float(rules["min_value"]):
                         errors.append({
                             "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
                             "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION",
-                            "Error_Message": f"Value {current_val} is below minimum {rules['min_value']}"
+                            "Error_Message": f"Value below minimum {rules['min_value']}"
                         })
                         row_has_error = True
 
@@ -72,19 +71,39 @@ for index, row in df.iterrows():
                     else:
                         seen_values[col_name].add(val_str)
 
-                # --- Step D: Length Check ---
-                if expected_type == "string":
-                    if "max_length" in rules and len(current_val) > rules["max_length"]:
+                # --- Step D: Length Check (Improved) ---
+                # Check length for any field that has min/max length rules
+                val_as_str = str(current_val)
+                if "min_length" in rules:
+                    if len(val_as_str) < int(rules["min_length"]):
                         errors.append({
                             "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
-                            "Invalid_Value": f"Length: {len(current_val)}", "Error_Type": "LENGTH_VIOLATION",
-                            "Error_Message": f"Max allowed is {rules['max_length']}"
+                            "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION",
+                            "Error_Message": f"Value too short (min: {rules['min_length']})"
+                        })
+                        row_has_error = True
+
+                if "max_length" in rules:
+                    if len(val_as_str) > int(rules["max_length"]):
+                        errors.append({
+                            "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
+                            "Invalid_Value": f"Length: {len(val_as_str)}", "Error_Type": "LENGTH_VIOLATION",
+                            "Error_Message": f"Value too long (max: {rules['max_length']})"
+                        })
+                        row_has_error = True
+
+                # --- Step E: Pattern Check ---
+                if expected_type == "string" and "pattern" in rules:
+                    if not re.match(rules["pattern"], val_as_str):
+                        errors.append({
+                            "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
+                            "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"
                         })
                         row_has_error = True
 
                 processed_row[target_name] = current_val
 
-            except Exception as e:
+            except Exception:
                 errors.append({
                     "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
                     "Invalid_Value": value, "Error_Type": "TYPE_MISMATCH", "Error_Message": "Type error"
@@ -101,4 +120,4 @@ if not error_df.empty:
     error_df.to_excel(os.path.join(output_dir, "validation_errors.xlsx"), index=False)
 
 pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
-print(f"Validation finished. Total errors: {len(errors)}")
+print(f"✅ Process finished. Check 'validation_errors.xlsx' for errors.")
