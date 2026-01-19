@@ -40,3 +40,10 @@ columns:
     required: false
     pattern: "^PRJ-[0-9]+$"  # Regex validation (e.g., PRJ-123)
     priority: 3
+
+  status:
+    target: status
+    type: string
+    required: true
+    allowed_values: ["Active", "Deactive", "Suspend"]  # لیست مقادیر مجاز
+    priority: 3
