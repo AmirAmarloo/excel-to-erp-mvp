@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import os
-import subprocess
+#import subprocess
 import re
 
 with open("mappings/mapping.yaml", "r") as f:
