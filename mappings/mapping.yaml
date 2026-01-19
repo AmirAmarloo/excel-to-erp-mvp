@@ -12,6 +12,7 @@ columns:
     type: int
     required: true
     unique: true
+    min_value: 1000
     priority: 1
 
   # 2. Column for Customer Name (String with Length Constraints)
