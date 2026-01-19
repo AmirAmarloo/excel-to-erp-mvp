@@ -10,19 +10,20 @@ columns:
     target: customer_id
     type: int
     required: true
+    unique: true
+    priority: 1  
 
   name:
     target: customer_name
     type: string
     required: true
-
-  amount:
-    target: invoice_amount
-    type: float
-    required: true
+    min_length: 3
+    max_length: 50
+    priority: 2  
 
   project_code:
     target: project_code
     type: string
     required: false
-
+    pattern: "^PRJ-[0-9]+$"
+    priority: 3  
