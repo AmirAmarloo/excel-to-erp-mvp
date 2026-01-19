@@ -32,9 +32,11 @@ for col in config_columns:
             "Column_Name": col,
             "Invalid_Value": "N/A",
             "Error_Type": "COLUMN_MISSING",
-            "Error_Message": f"Column '{col}' not found in Excel file"
+            "Error_Message": f"Column '{col}' not found"
         })
-    if config["columns"][col].get("unique"):
+    
+    col_rules = config["columns"][col]
+    if col_rules.get("unique") is True:
         seen_values[col] = set()
 
 if not missing_columns:
@@ -61,45 +63,42 @@ if not missing_columns:
                 continue
 
             if not pd.isna(value):
-                if is_unique:
-                    if value in seen_values[col_name]:
-                        errors.append({
-                            "Row_Number": index + 2,
-                            "Column_Name": col_name,
-                            "Invalid_Value": value,
-                            "Error_Type": "DUPLICATE_VALUE",
-                            "Error_Message": f"Value '{value}' is duplicated in column '{col_name}'"
-                        })
-                        row_errors.append("DUPLICATE")
-                    else:
-                        seen_values[col_name].add(value)
-
                 try:
                     current_val = value
                     if expected_type == "int":
                         current_val = int(value)
-                        if "min_value" in rules and current_val < rules["min_value"]:
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"Value less than minimum {rules['min_value']}"})
-                            row_errors.append("MIN_VALUE")
-                    
                     elif expected_type == "float":
                         current_val = float(value)
-                        if "min_value" in rules and current_val < rules["min_value"]:
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"Value less than minimum {rules['min_value']}"})
-                            row_errors.append("MIN_VALUE")
-
                     elif expected_type == "string":
-                        current_val = str(value)
+                        current_val = str(value).strip()
+
+                    if is_unique:
+                        if current_val in seen_values[col_name]:
+                            errors.append({
+                                "Row_Number": index + 2,
+                                "Column_Name": col_name,
+                                "Invalid_Value": value,
+                                "Error_Type": "DUPLICATE_VALUE",
+                                "Error_Message": f"Duplicate value detected"
+                            })
+                            row_errors.append("DUPLICATE")
+                        else:
+                            seen_values[col_name].add(current_val)
+
+                    if "min_value" in rules and current_val < rules["min_value"]:
+                        errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": f"Value less than {rules['min_value']}"})
+                        row_errors.append("MIN_VALUE")
+                    
+                    if expected_type == "string":
                         if "min_length" in rules and len(current_val) < rules["min_length"]:
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"Length less than {rules['min_length']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
                             row_errors.append("MIN_LENGTH")
                         if "max_length" in rules and len(current_val) > rules["max_length"]:
-                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": f"Length exceeds {rules['max_length']}"})
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too long"})
                             row_errors.append("MAX_LENGTH")
-                        if "pattern" in rules:
-                            if not re.match(rules["pattern"], current_val):
-                                errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format pattern"})
-                                row_errors.append("PATTERN_MISMATCH")
+                        if "pattern" in rules and not re.match(rules["pattern"], current_val):
+                            errors.append({"Row_Number": index + 2, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"})
+                            row_errors.append("PATTERN_MISMATCH")
 
                     processed_row[target_name] = current_val
 
@@ -109,7 +108,7 @@ if not missing_columns:
                         "Column_Name": col_name,
                         "Invalid_Value": value,
                         "Error_Type": "TYPE_MISMATCH",
-                        "Error_Message": f"Data type must be {expected_type}"
+                        "Error_Message": f"Must be {expected_type}"
                     })
                     row_errors.append("TYPE_MISMATCH")
 
@@ -124,10 +123,11 @@ if not error_df.empty:
 if not output_df.empty:
     output_df.to_excel(f"{output_dir}/cleaned_data.xlsx", index=False)
 
+print(f"Validation complete. Total errors: {len(errors)}")
+
 #try:
  #   subprocess.run(["git", "add", "data/result/"], check=True)
- #   subprocess.run(["git", "commit", "-m", "Added uniqueness check support"], check=True)
+ #   subprocess.run(["git", "commit", "-m", "Updated path and fixed uniqueness logic"], check=True)
  #   subprocess.run(["git", "push"], check=True)
- #   print("Changes synced with GitHub!")
-#except Exception as e:
-    #print(f"Git Push failed: {e}")
+#except:
+    #pass
