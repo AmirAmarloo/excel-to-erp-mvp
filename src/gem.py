@@ -47,7 +47,7 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
             expected_type = rules["type"]
             is_required = rules.get("required", False)
             is_unique = rules.get("unique", False)
-            col_priority = rules.get("priority", 99) # اگر اولویت نداشت، ۹۹ در نظر بگیر
+            col_priority = rules.get("priority", 99)
 
             if is_required and pd.isna(value):
                 errors.append({
@@ -63,6 +63,7 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
 
             if not pd.isna(value):
                 try:
+                    # گام اول: تبدیل به نوع داده هدف
                     if expected_type == "int":
                         current_val = int(float(value))
                     elif expected_type == "float":
@@ -70,30 +71,27 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
                     else:
                         current_val = str(value).strip()
 
+                    # گام دوم: چک کردن تکراری بودن (تبدیل به String برای مقایسه دقیق)
                     if is_unique:
-                        if current_val in seen_values[col_name]:
+                        val_str = str(current_val) # یکسان‌سازی نهایی
+                        if val_str in seen_values[col_name]:
                             errors.append({
                                 "Row_Number": index + 2,
                                 "Severity": col_priority,
                                 "Column_Name": col_name,
                                 "Invalid_Value": value,
                                 "Error_Type": "DUPLICATE_VALUE",
-                                "Error_Message": "Duplicate value"
+                                "Error_Message": f"Duplicate value '{current_val}' detected"
                             })
                             row_errors.append("DUP")
                         else:
-                            seen_values[col_name].add(current_val)
+                            seen_values[col_name].add(val_str)
 
-                    if "min_value" in rules and current_val < rules["min_value"]:
-                        errors.append({
-                            "Row_Number": index + 2,
-                            "Severity": col_priority,
-                            "Column_Name": col_name,
-                            "Invalid_Value": value,
-                            "Error_Type": "LIMIT_VIOLATION",
-                            "Error_Message": "Below minimum"
-                        })
-                        row_errors.append("LIM")
+                    # گام سوم: سایر اعتبارسنجی‌ها
+                    if expected_type in ["int", "float"] and "min_value" in rules:
+                        if current_val < rules["min_value"]:
+                            errors.append({"Row_Number": index + 2, "Severity": col_priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": "Below minimum"})
+                            row_errors.append("LIM")
 
                     if expected_type == "string":
                         if "min_length" in rules and len(current_val) < rules["min_length"]:
@@ -121,18 +119,17 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
 
 error_df = pd.DataFrame(errors)
 if not error_df.empty:
-    # مرتب‌سازی بر اساس اولویت هر ستون و سپس شماره سطر
     error_df = error_df.sort_values(by=["Severity", "Row_Number"])
     error_df.to_excel(f"{output_dir}/validation_errors.xlsx", index=False)
 
 if valid_rows:
     pd.DataFrame(valid_rows).to_excel(f"{output_dir}/cleaned_data.xlsx", index=False)
 
-print(f"Done! Errors sorted by column priority.")
+print(f"Validation complete. Total errors: {len(errors)}")
 
 #try:
- #   subprocess.run(["git", "add", "data/result/"], check=True)
- #   subprocess.run(["git", "commit", "-m", "Priority based on columns"], check=True)
- #   subprocess.run(["git", "push"], check=True)
+#    subprocess.run(["git", "add", "data/result/"], check=True)
+#    subprocess.run(["git", "commit", "-m", "Fixed uniqueness detection by string normalization"], check=True)
+#    subprocess.run(["git", "push"], check=True)
 #except:
     #pass
