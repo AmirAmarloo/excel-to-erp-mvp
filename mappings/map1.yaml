@@ -28,4 +28,4 @@ columns:
     target: project_code
     type: string
     required: false
-    pattern: "^PRJ-[0-9]{3}$"
+    pattern: "^PRJ-[0-9]+$"
