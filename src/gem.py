@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import os
-#import subprocess
+import subprocess
 import re
 
 with open("mappings/mapping.yaml", "r") as f:
@@ -18,6 +18,7 @@ if not os.path.exists(output_dir):
 
 errors = []
 valid_rows = []
+seen_values = {}
 
 excel_columns = [str(c).strip() for c in df.columns]
 config_columns = config["columns"].keys()
@@ -33,6 +34,8 @@ for col in config_columns:
             "Error_Type": "COLUMN_MISSING",
             "Error_Message": f"Column '{col}' not found in Excel file"
         })
+    if config["columns"][col].get("unique"):
+        seen_values[col] = set()
 
 if not missing_columns:
     for index, row in df.iterrows():
@@ -44,6 +47,7 @@ if not missing_columns:
             target_name = rules["target"]
             expected_type = rules["type"]
             is_required = rules.get("required", False)
+            is_unique = rules.get("unique", False)
 
             if is_required and pd.isna(value):
                 errors.append({
@@ -57,6 +61,19 @@ if not missing_columns:
                 continue
 
             if not pd.isna(value):
+                if is_unique:
+                    if value in seen_values[col_name]:
+                        errors.append({
+                            "Row_Number": index + 2,
+                            "Column_Name": col_name,
+                            "Invalid_Value": value,
+                            "Error_Type": "DUPLICATE_VALUE",
+                            "Error_Message": f"Value '{value}' is duplicated in column '{col_name}'"
+                        })
+                        row_errors.append("DUPLICATE")
+                    else:
+                        seen_values[col_name].add(value)
+
                 try:
                     current_val = value
                     if expected_type == "int":
@@ -108,9 +125,9 @@ if not output_df.empty:
     output_df.to_excel(f"{output_dir}/cleaned_data.xlsx", index=False)
 
 #try:
-#    subprocess.run(["git", "add", "data/result/"], check=True)
-#    subprocess.run(["git", "commit", "-m", "Validation results update - English logs"], check=True)
-#    subprocess.run(["git", "push"], check=True)
-#    print("Changes synced with GitHub!")
+ #   subprocess.run(["git", "add", "data/result/"], check=True)
+ #   subprocess.run(["git", "commit", "-m", "Added uniqueness check support"], check=True)
+ #   subprocess.run(["git", "push"], check=True)
+ #   print("Changes synced with GitHub!")
 #except Exception as e:
-   # print(f"Git Push failed: {e}")
+    #print(f"Git Push failed: {e}")
