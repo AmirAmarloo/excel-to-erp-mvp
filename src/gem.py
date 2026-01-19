@@ -1,7 +1,7 @@
 import pandas as pd
 import yaml
 import os
-#import subprocess
+import subprocess
 import re
 
 with open("mappings/mapping.yaml", "r") as f:
@@ -16,17 +16,6 @@ output_dir = "data/result"
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-# تعریف ترتیب اهمیت خطاها
-SEVERITY_MAP = {
-    "DUPLICATE_VALUE": 1,
-    "REQUIRED": 2,
-    "TYPE_MISMATCH": 3,
-    "COLUMN_MISSING": 0,  # بحرانی‌ترین حالت
-    "LIMIT_VIOLATION": 4,
-    "LENGTH_VIOLATION": 5,
-    "PATTERN_MISMATCH": 6
-}
-
 errors = []
 valid_rows = []
 seen_values = {}
@@ -38,7 +27,7 @@ for col in config_columns:
     if col not in excel_columns:
         errors.append({
             "Row_Number": "Global",
-            "Severity": SEVERITY_MAP["COLUMN_MISSING"],
+            "Severity": 0,
             "Column_Name": col,
             "Invalid_Value": "N/A",
             "Error_Type": "COLUMN_MISSING",
@@ -58,17 +47,18 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
             expected_type = rules["type"]
             is_required = rules.get("required", False)
             is_unique = rules.get("unique", False)
+            col_priority = rules.get("priority", 99) # اگر اولویت نداشت، ۹۹ در نظر بگیر
 
             if is_required and pd.isna(value):
                 errors.append({
                     "Row_Number": index + 2,
-                    "Severity": SEVERITY_MAP["REQUIRED"],
+                    "Severity": col_priority,
                     "Column_Name": col_name,
                     "Invalid_Value": "NULL",
                     "Error_Type": "REQUIRED",
                     "Error_Message": "Missing mandatory value"
                 })
-                row_errors.append("REQUIRED")
+                row_errors.append("REQ")
                 continue
 
             if not pd.isna(value):
@@ -84,68 +74,65 @@ if not any(e["Error_Type"] == "COLUMN_MISSING" for e in errors):
                         if current_val in seen_values[col_name]:
                             errors.append({
                                 "Row_Number": index + 2,
-                                "Severity": SEVERITY_MAP["DUPLICATE_VALUE"],
+                                "Severity": col_priority,
                                 "Column_Name": col_name,
                                 "Invalid_Value": value,
                                 "Error_Type": "DUPLICATE_VALUE",
-                                "Error_Message": f"Duplicate found"
+                                "Error_Message": "Duplicate value"
                             })
-                            row_errors.append("DUPLICATE")
+                            row_errors.append("DUP")
                         else:
                             seen_values[col_name].add(current_val)
 
                     if "min_value" in rules and current_val < rules["min_value"]:
                         errors.append({
                             "Row_Number": index + 2,
-                            "Severity": SEVERITY_MAP["LIMIT_VIOLATION"],
+                            "Severity": col_priority,
                             "Column_Name": col_name,
                             "Invalid_Value": value,
                             "Error_Type": "LIMIT_VIOLATION",
                             "Error_Message": "Below minimum"
                         })
-                        row_errors.append("LIMIT")
+                        row_errors.append("LIM")
 
                     if expected_type == "string":
                         if "min_length" in rules and len(current_val) < rules["min_length"]:
-                            errors.append({"Row_Number": index + 2, "Severity": SEVERITY_MAP["LENGTH_VIOLATION"], "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
-                            row_errors.append("LENGTH")
-                        if "max_length" in rules and len(current_val) > rules["max_length"]:
-                            errors.append({"Row_Number": index + 2, "Severity": SEVERITY_MAP["LENGTH_VIOLATION"], "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too long"})
-                            row_errors.append("LENGTH")
+                            errors.append({"Row_Number": index + 2, "Severity": col_priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
+                            row_errors.append("LEN")
                         if "pattern" in rules and not re.match(rules["pattern"], current_val):
-                            errors.append({"Row_Number": index + 2, "Severity": SEVERITY_MAP["PATTERN_MISMATCH"], "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"})
-                            row_errors.append("PATTERN")
+                            errors.append({"Row_Number": index + 2, "Severity": col_priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"})
+                            row_errors.append("PAT")
 
                     processed_row[target_name] = current_val
 
                 except:
                     errors.append({
                         "Row_Number": index + 2,
-                        "Severity": SEVERITY_MAP["TYPE_MISMATCH"],
+                        "Severity": col_priority,
                         "Column_Name": col_name,
                         "Invalid_Value": value,
                         "Error_Type": "TYPE_MISMATCH",
-                        "Error_Message": f"Invalid {expected_type} format"
+                        "Error_Message": "Type conversion error"
                     })
                     row_errors.append("TYPE")
 
         if not row_errors:
             valid_rows.append(processed_row)
 
-# مرتب‌سازی خطاها بر اساس شدت (Severity) قبل از ذخیره
 error_df = pd.DataFrame(errors)
 if not error_df.empty:
+    # مرتب‌سازی بر اساس اولویت هر ستون و سپس شماره سطر
     error_df = error_df.sort_values(by=["Severity", "Row_Number"])
     error_df.to_excel(f"{output_dir}/validation_errors.xlsx", index=False)
 
 if valid_rows:
     pd.DataFrame(valid_rows).to_excel(f"{output_dir}/cleaned_data.xlsx", index=False)
 
-print(f"Validation finished. Errors sorted by severity.")
+print(f"Done! Errors sorted by column priority.")
 
 #try:
-#    subprocess.run(["git", "add", "data/result/"], check=True)
-#    subprocess.run(["git", "commit", "-m", "Added error severity and sorting"], check=True)
-#    subprocess.run(["git", "push"], check=True)
+ #   subprocess.run(["git", "add", "data/result/"], check=True)
+ #   subprocess.run(["git", "commit", "-m", "Priority based on columns"], check=True)
+ #   subprocess.run(["git", "push"], check=True)
 #except:
-    pass
+    #pass
