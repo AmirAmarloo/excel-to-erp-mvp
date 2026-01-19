@@ -13,6 +13,7 @@ columns:
     required: true
     unique: true
     min_value: 1000
+    max_value: 9999
     priority: 1
 
   # 2. Column for Customer Name (String with Length Constraints)
