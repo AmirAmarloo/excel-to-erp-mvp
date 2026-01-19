@@ -10,6 +10,7 @@ columns:
     target: customer_id
     type: int
     required: true
+    unique: true
 
   name:
     target: customer_name
