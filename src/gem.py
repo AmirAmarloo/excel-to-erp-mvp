@@ -3,19 +3,39 @@ import yaml
 import os
 #import subprocess
 import re
+import sys
 
-with open("mappings/mapping.yaml", "r") as f:
-    config = yaml.safe_load(f)
+try:
+    # ۱. تست خواندن فایل تنظیمات
+    with open("mappings/mapping.yaml", "r") as f:
+        config = yaml.safe_load(f)
+    print("✅ YAML file loaded successfully.")
 
-col_to_check = "customr_id" # نام ستونی که در YAML نوشتی
+    # ۲. تست خواندن فایل اکسل
+    file_path = config["source"]["file"]
+    sheet = config["source"]["sheet"]
+    df = pd.read_excel(file_path, sheet_name=sheet)
+    print(f"✅ Excel file '{file_path}' loaded successfully.")
 
-print(f"--- Debug Info ---")
-print(f"1. Is '{col_to_check}' in Excel? {col_to_check in df.columns}")
-print(f"2. Data types in Excel:\n{df.dtypes}")
-print(f"3. First 5 values of '{col_to_check}':\n{df[col_to_check].head()}")
-print(f"4. Are there any duplicates in Excel for this column? {df[col_to_check].duplicated().any()}")
-print(f"------------------")
+    # ۳. بررسی ستون مورد نظر
+    col_to_check = "customr_id" 
+    
+    print(f"\n--- Debug Info ---")
+    print(f"1. Actual Columns in Excel: {list(df.columns)}")
+    
+    # پاکسازی نام ستون‌ها (حذف فاصله‌های احتمالی)
+    df.columns = [str(c).strip() for c in df.columns]
+    
+    if col_priority_check := col_to_check in df.columns:
+        print(f"2. Is '{col_to_check}' found? Yes")
+        print(f"3. Duplicates count in this column: {df[col_to_check].duplicated().sum()}")
+        print(f"4. Sample values: {df[col_to_check].head(5).tolist()}")
+    else:
+        print(f"2. Is '{col_to_check}' found? NO (Column name mismatch)")
+    print(f"------------------\n")
 
+except Exception as e:
+    print(f"❌ Error occurred: {e}")
 
 df = pd.read_excel(
     config["source"]["file"],
