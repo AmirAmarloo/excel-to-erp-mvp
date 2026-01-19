@@ -51,9 +51,6 @@ for index, row in df.iterrows():
         if "min_length" in rules and val_length < int(rules["min_length"]):
             errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
             row_has_error = True
-        if "max_length" in rules and val_length > int(rules["max_length"]):
-            errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": f"Length: {val_length}", "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too long"})
-            row_has_error = True
 
         try:
             # C. Type Conversion
@@ -85,9 +82,16 @@ for index, row in df.iterrows():
             # F. Pattern Check (Regex)
             if expected_type == "string" and "pattern" in rules:
                 if not re.match(rules["pattern"], val_str):
+                    errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"})
+                    row_has_error = True
+
+            # G. Enum Check (ALLOWED VALUES) - New Feature for 'status'
+            if "allowed_values" in rules:
+                if current_val not in rules["allowed_values"]:
                     errors.append({
                         "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
-                        "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Invalid format"
+                        "Invalid_Value": value, "Error_Type": "INVALID_OPTION", 
+                        "Error_Message": f"Value must be one of: {', '.join(rules['allowed_values'])}"
                     })
                     row_has_error = True
 
@@ -108,6 +112,4 @@ if not error_df.empty:
 
 pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
 
-# Original message as requested
-#print(f"Validation finished. Errors sorted by severity.")
 print(f"✅ Finished! Errors: {len(errors)}, Clean Rows: {len(valid_rows)}")
