@@ -109,4 +109,5 @@ if not error_df.empty:
 pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
 
 # Original message as requested
-print(f"Validation finished. Errors sorted by severity.")
+#print(f"Validation finished. Errors sorted by severity.")
+print(f"✅ Finished! Errors: {len(errors)}, Clean Rows: {len(valid_rows)}")
