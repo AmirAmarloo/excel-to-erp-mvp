@@ -20,6 +20,7 @@ valid_rows = []
 seen_values = {col: set() for col, rules in config["columns"].items() if rules.get("unique")}
 
 # 3. Processing Loop
+start_time = datetime.now()
 for index, row in df.iterrows():
     row_num = index + 2
     row_has_error = False
@@ -46,17 +47,17 @@ for index, row in df.iterrows():
 
         if not pd.isna(value):
             try:
-                # --- C. Type Conversion ---
+                # --- C. Type Conversion (Fixed dayfirst Warning) ---
                 if expected_type == "int":
                     current_val = int(float(value))
                 elif expected_type == "float":
                     current_val = float(value)
                 elif expected_type == "datetime":
-                    current_val = pd.to_datetime(value)
+                    current_val = pd.to_datetime(value, dayfirst=True)
                 else:
                     current_val = str(value)
 
-                # --- D. Standard Validations (Length, Range, Unique, Enum) ---
+                # --- D. Standard Validations ---
                 val_str = str(current_val)
                 if "min_length" in rules and len(val_str) < int(rules["min_length"]):
                     errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
@@ -65,6 +66,9 @@ for index, row in df.iterrows():
                 if expected_type in ["int", "float"]:
                     if "min_value" in rules and float(current_val) < float(rules["min_value"]):
                         errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": "Below min"})
+                        row_has_error = True
+                    if "max_value" in rules and float(current_val) > float(rules["max_value"]):
+                        errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": "Exceeds max"})
                         row_has_error = True
 
                 if rules.get("unique"):
@@ -78,18 +82,14 @@ for index, row in df.iterrows():
                     errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "INVALID_OPTION", "Error_Message": f"Options: {rules['allowed_values']}"})
                     row_has_error = True
 
-                # --- E. Custom Logic Engine (Optimized) ---
+                # --- E. Custom Logic Engine ---
                 if "custom_rule" in rules:
                     local_env = {'value': current_val, 'row': row, 'datetime': datetime, 'pd': pd}
-                    # If the rule evaluates to False, log it
                     if not eval(rules["custom_rule"], {"__builtins__": None}, local_env):
                         errors.append({
-                            "Row_Number": row_num, 
-                            "Severity": priority, 
-                            "Column_Name": col_name, 
-                            "Invalid_Value": value, 
-                            "Error_Type": "CUSTOM_LOGIC_VIOLATION", 
-                            "Error_Message": rules["custom_rule"] # متن قانون به عنوان پیام خطا
+                            "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
+                            "Invalid_Value": value, "Error_Type": "CUSTOM_LOGIC_VIOLATION", 
+                            "Error_Message": rules["custom_rule"]
                         })
                         row_has_error = True
 
@@ -102,12 +102,33 @@ for index, row in df.iterrows():
     if not row_has_error:
         valid_rows.append(processed_row)
 
-# 4. Save Results
+# 4. Save Results and Create Log File
+pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
 error_df = pd.DataFrame(errors)
 if not error_df.empty:
     error_df = error_df.sort_values(by=["Severity", "Row_Number"])
     error_df.to_excel(os.path.join(output_dir, "validation_errors.xlsx"), index=False)
 
-pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
+# --- F. Summary and Logging ---
+health_score = (len(valid_rows) / len(df)) * 100 if len(df) > 0 else 0
+log_content = f"""
+========================================
+📊 EXECUTION SUMMARY REPORT
+========================================
+Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Source File: {config['source']['file']}
+Total Rows Processed: {len(df)}
+----------------------------------------
+✅ Valid Rows: {len(valid_rows)}
+❌ Rows with Errors: {len(df) - len(valid_rows)}
+⚠️ Total Error Entries: {len(errors)}
+📈 Data Health Score: {health_score:.2f}%
+========================================
+"""
 
+# Save log to file
+with open(os.path.join(output_dir, "execution_summary.txt"), "w", encoding="utf-8") as f:
+    f.write(log_content)
+
+print(log_content)
 print(f"Validation finished. Errors sorted by severity.")
