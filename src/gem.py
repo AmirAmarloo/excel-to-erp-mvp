@@ -8,6 +8,7 @@ from datetime import datetime
 with open("mappings/mapping.yaml", "r") as f:
     config = yaml.safe_load(f)
 
+# 2. Read source Excel
 df = pd.read_excel(config["source"]["file"], sheet_name=config["source"]["sheet"])
 df.columns = [str(c).strip() for c in df.columns]
 
@@ -18,7 +19,7 @@ errors = []
 valid_rows = []
 seen_values = {col: set() for col, rules in config["columns"].items() if rules.get("unique")}
 
-# 2. Processing Loop
+# 3. Processing Loop
 for index, row in df.iterrows():
     row_num = index + 2
     row_has_error = False
@@ -26,65 +27,87 @@ for index, row in df.iterrows():
     
     for col_name, rules in config["columns"].items():
         value = row.get(col_name)
+        target_name = rules.get("target", col_name)
+        expected_type = rules["type"]
         priority = rules.get("priority", 99)
-        
+
         # --- A. Auto-Cleaning ---
         if rules.get("auto_clean") and isinstance(value, str):
             value = value.strip()
 
-        # --- B. Required Check ---
-        if rules.get("required") and pd.isna(value):
-            errors.append({"Row": row_num, "Col": col_name, "Type": "REQUIRED", "Severity": priority})
+        # --- B. Check Required ---
+        if rules.get("required") and (pd.isna(value) or str(value).strip() == ""):
+            errors.append({
+                "Row_Number": row_num, "Severity": priority, "Column_Name": col_name,
+                "Invalid_Value": "NULL", "Error_Type": "REQUIRED", "Error_Message": "Mandatory field"
+            })
             row_has_error = True
             continue
 
         if not pd.isna(value):
             try:
                 # --- C. Type Conversion ---
-                if rules["type"] == "int": current_val = int(float(value))
-                elif rules["type"] == "float": current_val = float(value)
-                elif rules["type"] == "datetime": current_val = pd.to_datetime(value)
-                else: current_val = str(value)
+                if expected_type == "int":
+                    current_val = int(float(value))
+                elif expected_type == "float":
+                    current_val = float(value)
+                elif expected_type == "datetime":
+                    current_val = pd.to_datetime(value)
+                else:
+                    current_val = str(value)
 
-                # --- D. Custom Logic Engine (The Power Feature) ---
+                # --- D. Standard Validations (Length, Range, Unique, Enum) ---
+                val_str = str(current_val)
+                if "min_length" in rules and len(val_str) < int(rules["min_length"]):
+                    errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LENGTH_VIOLATION", "Error_Message": "Too short"})
+                    row_has_error = True
+                
+                if expected_type in ["int", "float"]:
+                    if "min_value" in rules and float(current_val) < float(rules["min_value"]):
+                        errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "LIMIT_VIOLATION", "Error_Message": "Below min"})
+                        row_has_error = True
+
+                if rules.get("unique"):
+                    if val_str.lower() in seen_values[col_name]:
+                        errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "DUPLICATE_VALUE", "Error_Message": "Duplicate"})
+                        row_has_error = True
+                    else:
+                        seen_values[col_name].add(val_str.lower())
+
+                if "allowed_values" in rules and current_val not in rules["allowed_values"]:
+                    errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "INVALID_OPTION", "Error_Message": f"Options: {rules['allowed_values']}"})
+                    row_has_error = True
+
+                # --- E. Custom Logic Engine (Optimized) ---
                 if "custom_rule" in rules:
-                    # محیط اجرای کد کوچک برای کاربر (دسترسی به value و row)
-                    local_env = {'value': current_val, 'row': row, 'datetime': datetime}
+                    local_env = {'value': current_val, 'row': row, 'datetime': datetime, 'pd': pd}
+                    # If the rule evaluates to False, log it
                     if not eval(rules["custom_rule"], {"__builtins__": None}, local_env):
                         errors.append({
-                            "Row": row_num, "Col": col_name, "Val": value, 
-                            "Type": "CUSTOM_LOGIC_VIOLATION", "Severity": priority
+                            "Row_Number": row_num, 
+                            "Severity": priority, 
+                            "Column_Name": col_name, 
+                            "Invalid_Value": value, 
+                            "Error_Type": "CUSTOM_LOGIC_VIOLATION", 
+                            "Error_Message": rules["custom_rule"] # متن قانون به عنوان پیام خطا
                         })
                         row_has_error = True
 
-                # (سایر چک‌ها مثل Uniqueness و Length اینجا قرار می‌گیرند...)
-                processed_row[col_name] = current_val
+                processed_row[target_name] = current_val
 
-            except Exception as e:
-                errors.append({"Row": row_num, "Col": col_name, "Type": "PROCESSING_ERROR", "Severity": priority})
+            except Exception:
+                errors.append({"Row_Number": row_num, "Severity": priority, "Column_Name": col_name, "Invalid_Value": value, "Error_Type": "TYPE_MISMATCH", "Error_Message": f"Expected {expected_type}"})
                 row_has_error = True
 
     if not row_has_error:
         valid_rows.append(processed_row)
 
-# 3. Create Summary Report (Management Summary)
-report = {
-    "Execution Time": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-    "Total Rows": len(df),
-    "Valid Rows": len(valid_rows),
-    "Total Errors": len(errors),
-    "Health Score": f"{(len(valid_rows)/len(df))*100:.2f}%" if len(df)>0 else "0%"
-}
+# 4. Save Results
+error_df = pd.DataFrame(errors)
+if not error_df.empty:
+    error_df = error_df.sort_values(by=["Severity", "Row_Number"])
+    error_df.to_excel(os.path.join(output_dir, "validation_errors.xlsx"), index=False)
 
-# Save Results
-pd.DataFrame(errors).to_excel(os.path.join(output_dir, "validation_errors.xlsx"), index=False)
 pd.DataFrame(valid_rows).to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
 
-# Print Summary to Terminal
-print("\n" + "="*30)
-print("📊 MANAGEMENT SUMMARY")
-print("="*30)
-for key, val in report.items():
-    print(f"{key}: {val}")
-print("="*30)
-print("Validation finished. Errors sorted by severity.")
+print(f"Validation finished. Errors sorted by severity.")
