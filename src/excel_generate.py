@@ -1,70 +1,45 @@
 import pandas as pd
 import random
 from datetime import datetime, timedelta
-import numpy as np
 
-num_rows = 200
-data = []
+def generate_presentation_data():
+    num_rows = 200
+    data = []
+    now = datetime.now()
 
-valid_statuses = ["Active", "Deactive", "Suspend"]
-project_patterns = ["PRJ-101", "PRJ-202", "PRJ-303"]
+    for i in range(num_rows):
+        # 1. customr_id
+        c_id = 1000 + i if i != 10 else 1005 # Intentional Duplicate for row 10
+        
+        # 2. name
+        name = f"Company_{i}"
+        if i == 20: name = "  CleanMe  " # Test Auto-clean
+        
+        # 3. status
+        status = random.choice(["Active", "Deactive", "Suspend"])
+        
+        # 4. amount (Test DSL Conditional: If Suspend, amount must be 0)
+        if status == "Suspend":
+            amount = 0 if i % 5 != 0 else 500 # Row with error if i%5==0
+        else:
+            amount = round(random.uniform(1000, 5000), 2)
+            
+        # 5. project_code (Test Regex)
+        p_code = f"PRJ-{random.randint(100, 999)}" if i % 15 != 0 else "INVALID-123"
+        
+        # 6. created_at (Test Future Date and Serial Date)
+        if i == 30:
+            created_at = (now + timedelta(days=5)) # Future date Error
+        elif i == 40:
+            created_at = 45321.5 # Excel Serial Date for May 2024
+        else:
+            created_at = now - timedelta(days=i)
 
-# Current time for date calculations
-now = datetime.now()
+        data.append([c_id, name, amount, p_code, status, created_at])
 
-for i in range(num_rows):
-    # 1. customr_id (Logic: Unique, 1000-9999)
-    if i == 5 or i == 6:
-        c_id = 7777 # ERROR: Duplicate
-    elif i == 15:
-        c_id = 101  # ERROR: Below min_value
-    elif i == 25:
-        c_id = " 5000 " # TEST: auto_clean (Should pass after trimming)
-    else:
-        c_id = 2000 + i
+    df = pd.DataFrame(data, columns=['customr_id', 'name', 'amount', 'project_code', 'status', 'created_at'])
+    df.to_excel("data/sample.xlsx", index=False)
+    print("✅ New test data generated successfully!")
 
-    # 2. name (Logic: 3-50 chars)
-    if i == 35:
-        name = "AB" # ERROR: Too short
-    elif i == 45:
-        name = "   Customer_Clean   " # TEST: auto_clean
-    else:
-        name = f"Client_Node_{i}"
-
-    # 3. status (Logic: Allowed values)
-    if i == 55:
-        status = "Active " # TEST: auto_clean (Should fix the space)
-    elif i == 65:
-        status = "Pending" # ERROR: Invalid Option
-    else:
-        status = random.choice(valid_statuses)
-
-    # 4. amount (Logic: Custom rule - If Suspend, must be 0)
-    if status == "Suspend" and i % 2 == 0:
-        amount = 500.0 # ERROR: Custom logic violation (Suspend but amount > 0)
-    elif i == 75:
-        amount = -10 # ERROR: min_value violation
-    else:
-        amount = 0.0 if status == "Suspend" else round(random.uniform(500, 2500), 2)
-
-    # 5. created_at (Logic: Datetime, not in future)
-    if i == 85:
-        # ERROR: Future date (Custom logic violation)
-        created_at = (now + timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
-    elif i % 10 == 0:
-        # Valid: Past date with different format
-        created_at = (now - timedelta(days=i)).strftime("%d/%m/%Y %H:%M")
-    else:
-        created_at = now.strftime("%Y-%m-%d %H:%M:%S")
-
-    # 6. project_code
-    p_code = random.choice(project_patterns) if i % 12 != 0 else "INVALID-CODE"
-
-    data.append([c_id, name, amount, p_code, status, created_at])
-
-# Create DataFrame and Save
-df = pd.DataFrame(data, columns=['customr_id', 'name', 'amount', 'project_code', 'status', 'created_at'])
-df.to_excel("data/sample.xlsx", index=False)
-
-print(f"🚀 Success! Presentation file 'data/sample.xlsx' generated.")
-print(f"📊 Includes: Duplicates, Future Dates, Cleaning Tests, and Logic Conflicts.")
+if __name__ == "__main__":
+    generate_presentation_data()
