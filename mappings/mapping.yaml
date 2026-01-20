@@ -1,68 +1,57 @@
-# Mapping configuration for Excel to ERP validation
+# Configuration for Excel to ERP Validation Engine
 source:
-  file: data/sample.xlsx
-  sheet: Sheet1
+  file: "data/sample.xlsx"
+  sheet: "Sheet1"
 
-# Global settings for the target system
-target:
-  table: staging_invoices
-  db_connection: postgres_erp
-
-# Define validation rules for each column
 columns:
-  # 1. Customer ID - Unique identifier with range and custom logic
   customr_id:
-    target: customer_id
     type: int
     required: true
-    unique: true
-    auto_clean: true      # Removes leading/trailing spaces before validation
+    auto_clean: true
+    unique:
+      scope: "file"
+      case_insensitive: true
+      composite_with: [] # Standalone uniqueness
     min_value: 1000
     max_value: 9999
-    priority: 1           # Critical priority for database primary keys
+    priority: 1
 
-  # 2. Customer Name - String with length constraints
   name:
-    target: customer_name
-    type: string
-    required: true
-    auto_clean: true      # Clean name strings for uniformity
-    min_length: 3
-    max_length: 50
-    priority: 2
-
-  # 3. Invoice Amount - Float with conditional logic
-  amount:
-    target: invoice_amount
-    type: float
-    required: true
-    min_value: 0
-    # Custom Rule: If status is 'Suspend', amount must be 0
-    custom_rule: "0 if row['status'] == 'Suspend' else value >= 0"
-    priority: 2
-
-  # 4. Project Code - Regex pattern for specific format
-  project_code:
-    target: project_code
-    type: string
-    required: false
-    pattern: "^PRJ-[0-9]+$" # Validates formats like PRJ-101
-    priority: 3
-
-  # 5. Account Status - Enum/Allowed values check
-  status:
-    target: status
     type: string
     required: true
     auto_clean: true
+    min_length: 3
+    priority: 2
+
+  status:
+    type: string
+    required: true
     allowed_values: ["Active", "Deactive", "Suspend"]
     priority: 2
 
-  # 6. Created Date - Datetime with future date prevention
-  created_at:
-    target: created_at
-    type: datetime        # Handles date and time formats
+  amount:
+    type: float
     required: true
-    # Custom Rule: Ensure the date is not in the future
-    custom_rule: "value <= datetime.now()"
+    # DSL-based Custom Rule (Case: If status is Suspend, amount must be 0)
+    custom_rule:
+      type: "conditional"
+      if_col: "status"
+      equals: "Suspend"
+      then_value: 0
+    priority: 2
+
+  project_code:
+    type: string
+    pattern: "^PRJ-[0-9]+$" # Regex validation
+    priority: 3
+
+  created_at:
+    type: datetime
+    timezone: "UTC"
+    excel_date: true        # Handles Excel serial date numbers
+    # DSL-based Custom Rule (Case: Date cannot be in the future)
+    custom_rule:
+      type: "compare"
+      operator: "<="
+      right: "now"
     priority: 3
