@@ -1,49 +1,68 @@
+# Mapping configuration for Excel to ERP validation
 source:
   file: data/sample.xlsx
   sheet: Sheet1
 
+# Global settings for the target system
 target:
   table: staging_invoices
+  db_connection: postgres_erp
 
+# Define validation rules for each column
 columns:
-  # 1. Column for Customer ID (Integer, Unique, Required)
+  # 1. Customer ID - Unique identifier with range and custom logic
   customr_id:
     target: customer_id
     type: int
     required: true
     unique: true
+    auto_clean: true      # Removes leading/trailing spaces before validation
     min_value: 1000
     max_value: 9999
-    priority: 1
+    priority: 1           # Critical priority for database primary keys
 
-  # 2. Column for Customer Name (String with Length Constraints)
+  # 2. Customer Name - String with length constraints
   name:
     target: customer_name
     type: string
     required: true
+    auto_clean: true      # Clean name strings for uniformity
     min_length: 3
     max_length: 50
     priority: 2
 
-  # 3. Column for Amount (Float with Range Constraint)
+  # 3. Invoice Amount - Float with conditional logic
   amount:
     target: invoice_amount
     type: float
     required: true
-    min_value: 0        # Validation for numeric range
+    min_value: 0
+    # Custom Rule: If status is 'Suspend', amount must be 0
+    custom_rule: "0 if row['status'] == 'Suspend' else value >= 0"
     priority: 2
 
-  # 4. Column for Project Code (String with Regex Pattern)
+  # 4. Project Code - Regex pattern for specific format
   project_code:
     target: project_code
     type: string
     required: false
-    pattern: "^PRJ-[0-9]+$"  # Regex validation (e.g., PRJ-123)
+    pattern: "^PRJ-[0-9]+$" # Validates formats like PRJ-101
     priority: 3
 
+  # 5. Account Status - Enum/Allowed values check
   status:
     target: status
     type: string
     required: true
-    allowed_values: ["Active", "Deactive", "Suspend"]  # لیست مقادیر مجاز
+    auto_clean: true
+    allowed_values: ["Active", "Deactive", "Suspend"]
+    priority: 2
+
+  # 6. Created Date - Datetime with future date prevention
+  created_at:
+    target: created_at
+    type: datetime        # Handles date and time formats
+    required: true
+    # Custom Rule: Ensure the date is not in the future
+    custom_rule: "value <= datetime.now()"
     priority: 3
