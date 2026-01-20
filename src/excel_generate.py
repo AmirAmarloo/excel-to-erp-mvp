@@ -1,71 +1,70 @@
 import pandas as pd
 import random
+from datetime import datetime, timedelta
 import numpy as np
 
 num_rows = 200
 data = []
 
-# Possible values
 valid_statuses = ["Active", "Deactive", "Suspend"]
 project_patterns = ["PRJ-101", "PRJ-202", "PRJ-303"]
 
+# Current time for date calculations
+now = datetime.now()
+
 for i in range(num_rows):
-    row_num = i + 2 # For logic tracking
-    
-    # --- Column: customr_id (Logic: Unique, 1000-9999) ---
-    if i == 10 or i == 11:
-        c_id = 5555  # ERROR: Duplicate Value
-    elif i == 20:
-        c_id = 101   # ERROR: Limit Violation (Too Small)
-    elif i == 30:
-        c_id = 10001 # ERROR: Limit Violation (Too Large)
-    elif i == 40:
-        c_id = np.nan # ERROR: Required (Missing)
+    # 1. customr_id (Logic: Unique, 1000-9999)
+    if i == 5 or i == 6:
+        c_id = 7777 # ERROR: Duplicate
+    elif i == 15:
+        c_id = 101  # ERROR: Below min_value
+    elif i == 25:
+        c_id = " 5000 " # TEST: auto_clean (Should pass after trimming)
     else:
         c_id = 2000 + i
 
-    # --- Column: name (Logic: 3-50 chars) ---
-    if i == 50:
-        name = "Jo"  # ERROR: Length Violation (Too Short)
-    elif i == 60:
-        name = "X" * 60 # ERROR: Length Violation (Too Long)
-    elif i == 70:
-        name = np.nan # ERROR: Required (Missing)
+    # 2. name (Logic: 3-50 chars)
+    if i == 35:
+        name = "AB" # ERROR: Too short
+    elif i == 45:
+        name = "   Customer_Clean   " # TEST: auto_clean
     else:
-        name = f"Company_{i}"
+        name = f"Client_Node_{i}"
 
-    # --- Column: amount (Logic: min 0) ---
-    if i == 80:
-        amount = -50.5 # ERROR: Limit Violation (Negative)
-    elif i == 90:
-        amount = "InvalidAmount" # ERROR: Type Mismatch (String in Float col)
-    else:
-        amount = round(random.uniform(100, 5000), 2)
-
-    # --- Column: project_code (Logic: Regex ^PRJ-[0-9]+$) ---
-    if i == 100:
-        p_code = "PROJ-123" # ERROR: Pattern Mismatch (PROJ instead of PRJ)
-    elif i == 110:
-        p_code = "PRJ-ABC"  # ERROR: Pattern Mismatch (Letters instead of Numbers)
-    else:
-        p_code = f"PRJ-{random.randint(100, 999)}"
-
-    # --- Column: status (Logic: Enum ["Active", "Deactive", "Suspend"]) ---
-    if i == 120:
-        status = "active"   # ERROR: Invalid Option (Lowercase 'a')
-    elif i == 130:
-        status = "De-active" # ERROR: Invalid Option (Hyphen added)
-    elif i == 140:
-        status = "Suspended" # ERROR: Invalid Option (Wrong spelling)
+    # 3. status (Logic: Allowed values)
+    if i == 55:
+        status = "Active " # TEST: auto_clean (Should fix the space)
+    elif i == 65:
+        status = "Pending" # ERROR: Invalid Option
     else:
         status = random.choice(valid_statuses)
 
-    data.append([c_id, name, amount, p_code, status])
+    # 4. amount (Logic: Custom rule - If Suspend, must be 0)
+    if status == "Suspend" and i % 2 == 0:
+        amount = 500.0 # ERROR: Custom logic violation (Suspend but amount > 0)
+    elif i == 75:
+        amount = -10 # ERROR: min_value violation
+    else:
+        amount = 0.0 if status == "Suspend" else round(random.uniform(500, 2500), 2)
 
-# Generate DataFrame
-df = pd.DataFrame(data, columns=['customr_id', 'name', 'amount', 'project_code', 'status'])
+    # 5. created_at (Logic: Datetime, not in future)
+    if i == 85:
+        # ERROR: Future date (Custom logic violation)
+        created_at = (now + timedelta(days=10)).strftime("%Y-%m-%d %H:%M:%S")
+    elif i % 10 == 0:
+        # Valid: Past date with different format
+        created_at = (now - timedelta(days=i)).strftime("%d/%m/%Y %H:%M")
+    else:
+        created_at = now.strftime("%Y-%m-%d %H:%M:%S")
 
-# Save to Excel
+    # 6. project_code
+    p_code = random.choice(project_patterns) if i % 12 != 0 else "INVALID-CODE"
+
+    data.append([c_id, name, amount, p_code, status, created_at])
+
+# Create DataFrame and Save
+df = pd.DataFrame(data, columns=['customr_id', 'name', 'amount', 'project_code', 'status', 'created_at'])
 df.to_excel("data/sample.xlsx", index=False)
-print(f"✅ Presentation File Created: 200 rows with 15+ intentional errors.")
-print(f"Validation finished. Errors sorted by severity.")
+
+print(f"🚀 Success! Presentation file 'data/sample.xlsx' generated.")
+print(f"📊 Includes: Duplicates, Future Dates, Cleaning Tests, and Logic Conflicts.")
