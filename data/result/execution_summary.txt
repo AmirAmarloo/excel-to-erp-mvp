@@ -1,0 +1,13 @@
+
+========================================
+📊 EXECUTION SUMMARY REPORT
+========================================
+Timestamp: 2026-01-20 14:31:35
+Source File: data/sample.xlsx
+Total Rows Processed: 200
+----------------------------------------
+✅ Valid Rows: 132
+❌ Rows with Errors: 68
+⚠️ Total Error Entries: 70
+📈 Data Health Score: 66.00%
+========================================
