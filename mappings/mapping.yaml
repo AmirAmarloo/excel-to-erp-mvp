@@ -1,57 +1,48 @@
-# Configuration for Excel to ERP Validation Engine
 source:
-  file: "data/sample.xlsx"
+  file: "../data/input_data.xlsx"
   sheet: "Sheet1"
 
 columns:
-  customr_id:
-    type: int
-    required: true
-    auto_clean: true
-    unique:
-      scope: "file"
-      case_insensitive: true
-      composite_with: [] # Standalone uniqueness
-    min_value: 1000
-    max_value: 9999
-    priority: 1
-
   name:
-    type: string
+    type: "string"
+    priority: 1
     required: true
     auto_clean: true
-    min_length: 3
-    priority: 2
+    pattern: "^[a-zA-Z ]+$"
+    # Rule: Name length between 3 and 50
+    custom_rule:
+      type: "length"
+      min: 3
+      max: 50
 
   status:
-    type: string
-    required: true
-    allowed_values: ["Active", "Deactive", "Suspend"]
+    type: "string"
     priority: 2
+    required: true
+    # Rule: Only these status values are allowed
+    custom_rule:
+      type: "allowed_values"
+      list: ["active", "pending", "closed", "suspend"]
 
   amount:
-    type: float
+    type: "float"
+    priority: 2
     required: true
-    # DSL-based Custom Rule (Case: If status is Suspend, amount must be 0)
+    # Rule: If status is 'suspend', amount MUST be 0
     custom_rule:
       type: "conditional"
       if_col: "status"
-      equals: "Suspend"
+      equals: "suspend"
       then_value: 0
-    priority: 2
-
-  project_code:
-    type: string
-    pattern: "^PRJ-[0-9]+$" # Regex validation
-    priority: 3
 
   created_at:
-    type: datetime
+    type: "datetime"
     timezone: "UTC"
-    excel_date: true        # Handles Excel serial date numbers
-    # DSL-based Custom Rule (Case: Date cannot be in the future)
-    custom_rule:
-      type: "compare"
-      operator: "<="
-      right: "now"
+    excel_date: true
     priority: 3
+    # Rule: Protect against future dates and weird Excel numbers (like 4654654)
+    custom_rule:
+      type: "date_range"
+      min_year: 2000
+      max_year: 2026
+      not_future: true
