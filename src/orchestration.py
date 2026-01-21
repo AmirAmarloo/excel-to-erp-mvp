@@ -1,6 +1,7 @@
 import sys
 import os
 import pandas as pd
+# Importing internal modules
 from engine.loader import load_config, load_data
 from engine.validators import process_datetime, check_pattern
 from engine.rules import validate_custom_rule
@@ -8,22 +9,41 @@ from engine.reporter import save_results
 
 def run_pipeline():
     """
-    Final Orchestration: Manages the full lifecycle of data validation.
+    Final Orchestration Source: 
+    Coordinates between YAML mapping, data loading, and multi-layered validation.
     """
-    # Dynamic paths
+    
+    # 1. SMART PATH RESOLUTION
+    # BASE_DIR = .../excel-to-erp-mvp/src
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    config_path = os.path.join(BASE_DIR, "..", "mappings", "mapping.yaml")
-    output_dir = os.path.join(BASE_DIR, "..", "data", "result")
+    # ROOT_DIR = .../excel-to-erp-mvp
+    ROOT_DIR = os.path.dirname(BASE_DIR)
 
-    # Load Configuration and Excel Data
+    config_path = os.path.join(ROOT_DIR, "mappings", "mapping.yaml")
+    output_dir = os.path.join(ROOT_DIR, "data", "result")
+
+    # 2. INITIALIZATION
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Configuration file not found at: {config_path}")
+
     config = load_config(config_path)
-    df = load_data(config)
+    
+    # Resolve Excel Path dynamically to avoid directory issues
+    excel_filename = os.path.basename(config["source"]["file"])
+    excel_path = os.path.join(ROOT_DIR, "data", excel_filename)
+    
+    if not os.path.exists(excel_path):
+        raise FileNotFoundError(f"Input Excel not found at: {excel_path}")
+
+    # Load data using the resolved path
+    df = pd.read_excel(excel_path, sheet_name=config["source"]["sheet"])
     
     errors = []
     valid_rows = []
 
+    # 3. ROW-BY-ROW VALIDATION
     for index, row in df.iterrows():
-        row_num = index + 2
+        row_num = index + 2 # Excel starts at row 1, headers are row 1
         row_has_error = False
         processed_row = {}
         
@@ -31,31 +51,42 @@ def run_pipeline():
             value = row.get(col_name)
             priority = rules.get("priority", 99)
             
-            # 1. Type Conversion
             try:
+                # A. Type Conversion & Basic Cleaning
                 if rules["type"] == "datetime":
                     current_val = process_datetime(value, rules)
                 elif rules["type"] == "float":
-                    current_val = float(str(value).strip())
+                    current_val = float(str(value).replace(',', '').strip())
                 elif rules["type"] == "int":
                     current_val = int(float(str(value).strip()))
                 else:
                     current_val = str(value).strip() if not pd.isna(value) else value
 
-                # 2. Mandatory Check
-                if rules.get("required") and pd.isna(current_val):
-                    raise ValueError("This field is required but missing.")
+                # B. Mandatory Field Check
+                if rules.get("required") and (pd.isna(current_val) or str(current_val) == ""):
+                    raise ValueError(f"Column '{col_name}' is mandatory.")
 
-                # 3. Custom DSL Rules (Length, Allowed Values, Conditional, Date Range)
+                # C. Custom DSL Rules (Length, Status, Conditional Amount, Date Range)
                 if "custom_rule" in rules and not pd.isna(current_val):
                     rule_config = rules["custom_rule"]
+                    # We pass 'row' to handle conditional rules (like amount depends on status)
                     if not validate_custom_rule(rule_config, current_val, row):
+                        error_msg = f"Failed {rule_config['type']} rule."
+                        # Specialized message for better UX
+                        if rule_config['type'] == 'conditional':
+                            error_msg = f"Value {current_val} invalid because {rule_config['if_col']} is {row.get(rule_config['if_col'])}"
+                        
                         errors.append({
                             "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                            "Invalid_Value": value, "Error_Type": "BUSINESS_RULE_VIOLATION", 
-                            "Error_Message": f"Failed {rule_config['type']} validation"
+                            "Invalid_Value": value, "Error_Type": "RULE_VIOLATION", 
+                            "Error_Message": error_msg
                         })
                         row_has_error = True
+
+                # D. Regex Pattern Check
+                if "pattern" in rules and not pd.isna(current_val):
+                    if not check_pattern(str(current_val), rules["pattern"]):
+                        raise ValueError(f"Does not match required pattern: {rules['pattern']}")
 
                 processed_row[col_name] = current_val
 
@@ -66,17 +97,20 @@ def run_pipeline():
                 })
                 row_has_error = True
 
+        # 4. COLLECTION
         if not row_has_error:
             valid_rows.append(processed_row)
 
-    # Export results
-    log = save_results(valid_rows, errors, output_dir, config)
-    print(log)
+    # 5. REPORTING
+    # Ensure output directory exists
+    os.makedirs(output_dir, exist_ok=True)
+    report_log = save_results(valid_rows, errors, output_dir, config)
+    print(report_log)
 
 if __name__ == "__main__":
-    print("🚀 Running Orchestration with all Business Rules...")
+    print("🚀 Starting Data Pipeline...")
     try:
         run_pipeline()
-        print("✨ Process finished. Check data/result folder.")
+        print("✅ Process Completed Successfully.")
     except Exception as e:
-        print(f"❌ System Failure: {e}")
+        print(f"❌ CRITICAL SYSTEM ERROR: {e}")
