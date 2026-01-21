@@ -4,27 +4,27 @@ from datetime import datetime
 
 def process_datetime(value, rules):
     """
-    Processes datetime values with strict validation for Excel serial numbers.
+    Processes datetime strings and Excel serial numbers.
+    Ensures the output is a timezone-aware pandas Timestamp.
     """
     try:
-        # Check if the value is a number (Excel serial date)
+        # 1. Handle Numeric input (Excel Serial Dates)
         if isinstance(value, (int, float)):
-            # Heuristic: Excel dates for the 21st century (2000-2100) 
-            # fall between 36526 and 73050. 
-            # 4321.5 is way too small (it's in the year 1911).
-            if value < 30000: # 30000 is approx year 1982
-                raise ValueError(f"Value '{value}' is too small to be a valid modern date.")
+            # Validate if it's a realistic modern Excel date (e.g., > year 1990)
+            if value < 32874: # 32874 is approx 1990-01-01
+                raise ValueError(f"Numeric value {value} is too old or invalid.")
             
             if rules.get("excel_date"):
                 dt_obj = pd.to_datetime(value, unit='D', origin='1899-12-30')
             else:
-                # If excel_date is not allowed in config, reject numeric input
-                raise ValueError("Numeric dates are not allowed for this field.")
+                raise ValueError("Numeric Excel dates are disabled in config.")
+        
+        # 2. Handle String input
         else:
-            # If it's a string, parse it normally
+            # pd.to_datetime is powerful enough to handle '4:18:26 PM' automatically
             dt_obj = pd.to_datetime(value, dayfirst=True)
 
-        # Timezone localization
+        # 3. Timezone conversion (Default to UTC if not specified)
         target_tz = rules.get("timezone", "UTC")
         if dt_obj.tzinfo is None:
             dt_obj = dt_obj.tz_localize('UTC').tz_convert(target_tz)
@@ -34,11 +34,11 @@ def process_datetime(value, rules):
         return dt_obj
 
     except Exception as e:
-        # This will be caught by orchestration.py and added to the error list
-        raise ValueError(f"Invalid date format: {value}. {str(e)}")
+        # This message will appear in your validation_errors.xlsx
+        raise ValueError(f"Datetime processing failed: {str(e)}")
 
 def check_pattern(value, pattern):
     """
-    Validates a string against a regex pattern.
+    Validates a string value against a regex pattern.
     """
     return bool(re.fullmatch(str(pattern), str(value)))
