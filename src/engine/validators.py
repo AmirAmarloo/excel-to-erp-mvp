@@ -1,22 +1,28 @@
-import pandas as pd
-import re
+from datetime import datetime
+import pytz
 
-def process_datetime(value, rules):
-    """Processes Excel dates and timezones."""
-    if rules.get("excel_date") and isinstance(value, (int, float)):
-        # Convert Excel serial number to datetime
-        dt_obj = pd.to_datetime(value, unit='D', origin='1899-12-30')
-    else:
-        # Convert string to datetime
-        dt_obj = pd.to_datetime(value, dayfirst=True)
+def validate_custom_rule(rule, current_val, row):
+    """DSL-based rule engine."""
+    rule_type = rule.get("type")
     
-    target_tz = rules.get("timezone", "UTC")
-    if dt_obj.tzinfo is None:
-        dt_obj = dt_obj.tz_localize('UTC').tz_convert(target_tz)
-    else:
-        dt_obj = dt_obj.tz_convert(target_tz)
-    return dt_obj
+    if rule_type == "conditional":
+        if_col = rule.get("if_col")
+        if row.get(if_col) == rule.get("equals"):
+            return current_val == rule.get("then_value")
+        return True
 
-def check_pattern(value, pattern):
-    """Checks if string matches regex pattern."""
-    return bool(re.fullmatch(str(pattern), str(value)))
+    elif rule_type == "compare":
+        op = rule.get("operator")
+        right_side = rule.get("right")
+        
+        if right_side == "now":
+            compare_to = datetime.now(pytz.UTC)
+        else:
+            compare_to = right_side
+        
+        if op == "<=": return current_val <= compare_to
+        if op == ">=": return current_val >= compare_to
+        if op == "==": return current_val == compare_to
+        if op == "!=": return current_val != compare_to
+        
+    return True
