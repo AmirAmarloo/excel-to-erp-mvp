@@ -11,9 +11,19 @@ def run_pipeline():
     Main orchestration function to execute the validation pipeline.
     It coordinates between loader, validators, rules, and reporter.
     """
+    # Dynamic Path Resolution: Locate the root folder based on this file's position
+    # BASE_DIR is the 'src' folder
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    
+    # Define absolute paths for config and output to prevent "File Not Found" errors
+    config_path = os.path.join(BASE_DIR, "..", "mappings", "mapping.yaml")
+    output_dir = os.path.join(BASE_DIR, "..", "data", "result")
+
     # 1. Initialization: Load configuration and source data
-    # Using '..' to access mappings from the 'src' directory
-    config = load_config("../mappings/mapping.yaml")
+    if not os.path.exists(config_path):
+        raise FileNotFoundError(f"Config file not found at: {config_path}")
+        
+    config = load_config(config_path)
     df = load_data(config)
     
     errors = []
@@ -109,12 +119,12 @@ def run_pipeline():
                     else:
                         seen_entries[scope].add(key)
 
-        # Collect valid rows for export
+        # Collect valid rows for export if no errors found
         if not row_has_error:
             valid_rows.append(processed_row)
 
     # 4. Final Reporting and File Generation
-    log = save_results(valid_rows, errors, "../data/result", config)
+    log = save_results(valid_rows, errors, output_dir, config)
     print(log)
 
 if __name__ == "__main__":
