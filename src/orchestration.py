@@ -8,22 +8,19 @@ from engine.reporter import save_results
 
 def run_pipeline():
     """
-    Main orchestration function to execute the validation pipeline.
-    Includes robust type checking for int and float.
+    Final Orchestration: Manages the full lifecycle of data validation.
     """
+    # Dynamic paths
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(BASE_DIR, "..", "mappings", "mapping.yaml")
     output_dir = os.path.join(BASE_DIR, "..", "data", "result")
 
-    if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Config file not found at: {config_path}")
-        
+    # Load Configuration and Excel Data
     config = load_config(config_path)
     df = load_data(config)
     
     errors = []
     valid_rows = []
-    seen_entries = {}
 
     for index, row in df.iterrows():
         row_num = index + 2
@@ -34,65 +31,52 @@ def run_pipeline():
             value = row.get(col_name)
             priority = rules.get("priority", 99)
             
-            if rules.get("auto_clean") and isinstance(value, str):
-                value = value.strip()
+            # 1. Type Conversion
+            try:
+                if rules["type"] == "datetime":
+                    current_val = process_datetime(value, rules)
+                elif rules["type"] == "float":
+                    current_val = float(str(value).strip())
+                elif rules["type"] == "int":
+                    current_val = int(float(str(value).strip()))
+                else:
+                    current_val = str(value).strip() if not pd.isna(value) else value
 
-            if rules.get("required") and pd.isna(value):
+                # 2. Mandatory Check
+                if rules.get("required") and pd.isna(current_val):
+                    raise ValueError("This field is required but missing.")
+
+                # 3. Custom DSL Rules (Length, Allowed Values, Conditional, Date Range)
+                if "custom_rule" in rules and not pd.isna(current_val):
+                    rule_config = rules["custom_rule"]
+                    if not validate_custom_rule(rule_config, current_val, row):
+                        errors.append({
+                            "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
+                            "Invalid_Value": value, "Error_Type": "BUSINESS_RULE_VIOLATION", 
+                            "Error_Message": f"Failed {rule_config['type']} validation"
+                        })
+                        row_has_error = True
+
+                processed_row[col_name] = current_val
+
+            except Exception as e:
                 errors.append({
                     "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                    "Invalid_Value": "NULL", "Error_Type": "REQUIRED", "Error_Message": "Missing data"
+                    "Invalid_Value": value, "Error_Type": "VALIDATION_ERROR", "Error_Message": str(e)
                 })
                 row_has_error = True
-                continue
-
-            if not pd.isna(value):
-                try:
-                    # Specialized Type Validation
-                    if rules["type"] == "datetime":
-                        current_val = process_datetime(value, rules)
-                    elif rules["type"] == "int":
-                        current_val = int(float(str(value)))
-                    elif rules["type"] == "float":
-                        current_val = float(str(value))
-                    else:
-                        current_val = value
-
-                    # Logic Validation
-                    if rules["type"] == "string" and "pattern" in rules:
-                        if not check_pattern(current_val, rules["pattern"]):
-                            errors.append({
-                                "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                                "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Regex failure"
-                            })
-                            row_has_error = True
-
-                    if "custom_rule" in rules:
-                        if not validate_custom_rule(rules["custom_rule"], current_val, row):
-                            errors.append({
-                                "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                                "Invalid_Value": value, "Error_Type": "CUSTOM_LOGIC_VIOLATION", "Error_Message": "DSL Rule failure"
-                            })
-                            row_has_error = True
-
-                    processed_row[col_name] = current_val
-
-                except Exception:
-                    errors.append({
-                        "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                        "Invalid_Value": value, "Error_Type": "INVALID_TYPE", "Error_Message": f"Value is not a valid {rules['type']}"
-                    })
-                    row_has_error = True
 
         if not row_has_error:
             valid_rows.append(processed_row)
 
+    # Export results
     log = save_results(valid_rows, errors, output_dir, config)
     print(log)
 
 if __name__ == "__main__":
-    print("🚀 Starting Orchestration with Numeric Validation...")
+    print("🚀 Running Orchestration with all Business Rules...")
     try:
         run_pipeline()
-        print("✅ Done.")
+        print("✨ Process finished. Check data/result folder.")
     except Exception as e:
-        print(f"❌ Critical Failure: {e}")
+        print(f"❌ System Failure: {e}")
