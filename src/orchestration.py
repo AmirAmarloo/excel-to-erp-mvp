@@ -9,17 +9,12 @@ from engine.reporter import save_results
 def run_pipeline():
     """
     Main orchestration function to execute the validation pipeline.
-    It coordinates between loader, validators, rules, and reporter.
+    Includes robust type checking for int and float.
     """
-    # Dynamic Path Resolution: Locate the root folder based on this file's position
-    # BASE_DIR is the 'src' folder
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    
-    # Define absolute paths for config and output to prevent "File Not Found" errors
     config_path = os.path.join(BASE_DIR, "..", "mappings", "mapping.yaml")
     output_dir = os.path.join(BASE_DIR, "..", "data", "result")
 
-    # 1. Initialization: Load configuration and source data
     if not os.path.exists(config_path):
         raise FileNotFoundError(f"Config file not found at: {config_path}")
         
@@ -28,24 +23,20 @@ def run_pipeline():
     
     errors = []
     valid_rows = []
-    seen_entries = {} # Dictionary to track unique/composite keys
+    seen_entries = {}
 
-    # 2. Row-by-row processing
     for index, row in df.iterrows():
-        row_num = index + 2 # Excel row numbering starts from 2
+        row_num = index + 2
         row_has_error = False
         processed_row = {}
         
-        # Validate each column defined in the mapping
         for col_name, rules in config["columns"].items():
             value = row.get(col_name)
             priority = rules.get("priority", 99)
             
-            # Clean string data if auto_clean is enabled
             if rules.get("auto_clean") and isinstance(value, str):
                 value = value.strip()
 
-            # Check for mandatory fields
             if rules.get("required") and pd.isna(value):
                 errors.append({
                     "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
@@ -56,24 +47,25 @@ def run_pipeline():
 
             if not pd.isna(value):
                 try:
-                    # Data type conversion and specialized processing
+                    # Specialized Type Validation
                     if rules["type"] == "datetime":
                         current_val = process_datetime(value, rules)
                     elif rules["type"] == "int":
-                        current_val = int(float(value))
+                        current_val = int(float(str(value)))
+                    elif rules["type"] == "float":
+                        current_val = float(str(value))
                     else:
                         current_val = value
 
-                    # Regex pattern validation
+                    # Logic Validation
                     if rules["type"] == "string" and "pattern" in rules:
                         if not check_pattern(current_val, rules["pattern"]):
                             errors.append({
                                 "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                                "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": f"Regex failure: {rules['pattern']}"
+                                "Invalid_Value": value, "Error_Type": "PATTERN_MISMATCH", "Error_Message": "Regex failure"
                             })
                             row_has_error = True
 
-                    # DSL-based business rule validation
                     if "custom_rule" in rules:
                         if not validate_custom_rule(rules["custom_rule"], current_val, row):
                             errors.append({
@@ -84,54 +76,23 @@ def run_pipeline():
 
                     processed_row[col_name] = current_val
 
-                except Exception as e:
+                except Exception:
                     errors.append({
                         "Row_Number": row_num, "Severity": priority, "Column_Name": col_name, 
-                        "Invalid_Value": value, "Error_Type": "PROCESSING_ERROR", "Error_Message": str(e)
+                        "Invalid_Value": value, "Error_Type": "INVALID_TYPE", "Error_Message": f"Value is not a valid {rules['type']}"
                     })
                     row_has_error = True
 
-        # 3. Composite Uniqueness Validation
-        if not row_has_error:
-            for col_name, rules in config["columns"].items():
-                if "unique" in rules:
-                    u_cfg = rules["unique"]
-                    composite_cols = [col_name] + u_cfg.get("composite_with", [])
-                    
-                    # Create a unique key for comparison
-                    key_parts = []
-                    for c in composite_cols:
-                        val = str(processed_row.get(c))
-                        key_parts.append(val.lower() if u_cfg.get("case_insensitive") else val)
-                    
-                    key = "|".join(key_parts)
-                    scope = "-".join(composite_cols)
-                    
-                    if scope not in seen_entries: 
-                        seen_entries[scope] = set()
-                    
-                    if key in seen_entries[scope]:
-                        errors.append({
-                            "Row_Number": row_num, "Severity": rules.get("priority"), "Column_Name": col_name, 
-                            "Invalid_Value": key, "Error_Type": "DUPLICATE", "Error_Message": f"Duplicate found in {scope}"
-                        })
-                        row_has_error = True
-                    else:
-                        seen_entries[scope].add(key)
-
-        # Collect valid rows for export if no errors found
         if not row_has_error:
             valid_rows.append(processed_row)
 
-    # 4. Final Reporting and File Generation
     log = save_results(valid_rows, errors, output_dir, config)
     print(log)
 
 if __name__ == "__main__":
-    # Entry point of the script
-    print("🚀 Starting Orchestration...")
+    print("🚀 Starting Orchestration with Numeric Validation...")
     try:
         run_pipeline()
-        print("✅ Orchestration completed successfully.")
+        print("✅ Done.")
     except Exception as e:
         print(f"❌ Critical Failure: {e}")
