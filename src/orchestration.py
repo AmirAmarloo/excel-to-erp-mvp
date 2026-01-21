@@ -2,6 +2,8 @@ import sys
 import os
 import pandas as pd
 # Importing internal modules
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 from engine.loader import load_config, load_data
 from engine.validators import process_datetime, check_pattern
 from engine.rules import validate_custom_rule
