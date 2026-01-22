@@ -10,7 +10,7 @@ columns:
     pattern: "^PRJ-\\d+$"
     auto_clean: true
     normalize: true
-    priority: 1
+    priority: 3
 
   customer_code:
     type: string
