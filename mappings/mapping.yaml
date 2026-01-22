@@ -6,7 +6,7 @@ columns:
   project_code:
     type: string
     required: true
-    unique: true
+    unique: false
     pattern: "^PRJ-\\d+$"
     auto_clean: true
     normalize: false
