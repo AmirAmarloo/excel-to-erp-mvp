@@ -43,3 +43,4 @@ def validate_business_rules(rules, current_val, row):
                     return False, f"Amount must be {c_rule['then_value']} when {c_rule['if_col']} is {c_rule['equals']}"
 
     return True, None
+# in VSCode
