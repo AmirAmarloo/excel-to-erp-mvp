@@ -2,9 +2,9 @@
 ========================================
 📊 DATA VALIDATION LOG
 ========================================
-Execution Time: 2026-01-22 14:00:46
+Execution Time: 2026-01-22 14:15:40
 Source: ../data/input_data.xlsx
-Valid Rows: 0
-Error Count: 407
-Health Score: 0.00%
+Valid Rows: 191
+Error Count: 12
+Health Score: 95.50%
 ========================================
