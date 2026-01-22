@@ -9,7 +9,7 @@ columns:
     unique: true
     pattern: "^PRJ-\\d+$"
     auto_clean: true
-    normalize: true
+    normalize: false
     priority: 3
 
   customer_code:
@@ -18,7 +18,7 @@ columns:
     unique: false
     pattern: "^CUST-\\d+$"
     auto_clean: true
-    normalize: true
+    normalize: false
     priority: 1
 
   invoice_number:
