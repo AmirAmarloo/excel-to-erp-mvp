@@ -3,48 +3,71 @@ source:
   sheet: "Sheet1"
 
 columns:
-  customer_code:
-    type: "string"
-    priority: 1
+  project_code:
+    type: string
     required: true
     unique: true
-    pattern: "^CUST-\\d+$" # Format like CUST-101
+    pattern: "^PRJ-\\d+$"
+    auto_clean: true
+    normalize: true
+    priority: 1
+
+  customer_code:
+    type: string
+    required: true
+    unique: false
+    pattern: "^CUST-\\d+$"
+    auto_clean: true
+    normalize: true
+    priority: 1
+
+  invoice_number:
+    type: string
+    required: true
+    auto_clean: true
+    normalize: true
+    unique_composite: ["customer_code"]
+    priority: 1
 
   name:
-    type: "string"
-    priority: 1
+    type: string
     required: true
-    unique: true
-    custom_rule:
-      type: "length"
-      min: 3
-      max: 50
+    unique: false
+    min_length: 3
+    max_length: 50
+    auto_clean: true
+    normalize: true
+    priority: 2
 
   status:
-    type: "string"
-    priority: 2
+    type: string
     required: true
-    custom_rule:
-      type: "allowed_values"
-      list: ["active", "pending", "closed", "suspend"]
+    allowed_values:
+      - active
+      - pending
+      - closed
+      - suspend
+    auto_clean: true
+    normalize: true
+    priority: 2
 
   amount:
-    type: "float"
-    priority: 2
+    type: float
     required: true
-    custom_rule:
-      type: "conditional"
-      if_col: "status"
-      equals: "suspend"
+    min_value: 0
+    custom_rule: # For conditional logic
+      type: conditional
+      if_col: status
+      equals: suspend
       then_value: 0
+    priority: 2
 
   created_at:
-    type: "datetime"
-    timezone: "UTC"
+    type: datetime
+    required: true
+    timezone: UTC
     excel_date: true
+    min_year: 2000
+    max_year: "current"
+    not_future: true
     priority: 3
-    custom_rule:
-      type: "date_range"
-      min_year: 2000
-      max_year: 2026
-      not_future: true
