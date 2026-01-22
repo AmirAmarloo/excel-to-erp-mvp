@@ -3,11 +3,18 @@ source:
   sheet: "Sheet1"
 
 columns:
+  customer_code:
+    type: "string"
+    priority: 1
+    required: true
+    unique: true
+    pattern: "^CUST-\\d+$" # Format like CUST-101
+
   name:
     type: "string"
     priority: 1
     required: true
-    unique: true          # <--- New: Ensures names are not duplicated
+    unique: true
     custom_rule:
       type: "length"
       min: 3
