@@ -4,53 +4,43 @@ import os
 def generate_test_excel():
     rows = []
     
-    # 1. VALID DATA (20 Rows)
+    # 1. VALID DATA (Rows with Customer Code)
     for i in range(1, 21):
         rows.append({
+            "customer_code": f"CUST-{100+i}",
             "name": f"Valid User {i}",
             "status": "active",
             "amount": 1000 + i,
-            "created_at": "2026-01-10 10:00:00"
+            "created_at": "2026-01-10"
         })
 
-    # 2. UNIQUENESS TEST (Should trigger Duplicate Error)
-    rows.append({"name": "Valid User 1", "status": "active", "amount": 500, "created_at": "2026-01-11"})
+    # 2. TEST: DUPLICATE CUSTOMER CODE
+    rows.append({"customer_code": "CUST-101", "name": "Duplicate Code User", "status": "active", "amount": 500, "created_at": "2026-01-11"})
     
-    # 3. TYPE VALIDATION TEST (Should trigger TYPE_OR_VALIDATION_ERROR)
-    rows.append({"name": "Type Error User", "status": "active", "amount": "INVALID_STRING", "created_at": "2026-01-12"})
-    rows.append({"name": "Bad Date User", "status": "active", "amount": 200, "created_at": "Not-A-Date"})
+    # 3. TEST: INVALID CODE PATTERN
+    rows.append({"customer_code": "WRONG_99", "name": "Pattern Fail User", "status": "active", "amount": 200, "created_at": "2026-01-12"})
 
-    # 4. LENGTH RULE TEST (Should trigger Business Rule Violation)
-    rows.append({"name": "A", "status": "active", "amount": 300, "created_at": "2026-01-13"}) # Too short
-    rows.append({"name": "X" * 60, "status": "active", "amount": 400, "created_at": "2026-01-14"}) # Too long
+    # 4. TEST: SUSPEND RULE (Amount must be 0)
+    rows.append({"customer_code": "CUST-500", "name": "Suspend Fail", "status": "suspend", "amount": 5000, "created_at": "2026-01-13"})
 
-    # 5. ALLOWED VALUES TEST (Should trigger Business Rule Violation)
-    rows.append({"name": "Wrong Status User", "status": "unknown_status", "amount": 100, "created_at": "2026-01-15"})
+    # 5. TEST: EXTREME EXCEL DATE (4654654.23)
+    rows.append({"customer_code": "CUST-600", "name": "Crazy Date User", "status": "active", "amount": 100, "created_at": 4654654.23})
 
-    # 6. CONDITIONAL RULE TEST (Suspend logic: Amount must be 0)
-    rows.append({"name": "Suspend Fail", "status": "suspend", "amount": 9999, "created_at": "2026-01-16"}) 
-    rows.append({"name": "Suspend Pass", "status": "suspend", "amount": 0, "created_at": "2026-01-17"}) 
-
-    # 7. DATE RANGE & EXCEL SERIAL TEST
-    rows.append({"name": "Future Date User", "status": "active", "amount": 100, "created_at": "2027-01-01"})
-    rows.append({"name": "Extreme Excel Date", "status": "active", "amount": 100, "created_at": 4654654.23})
-
-    # 8. FILL REMAINING (Up to 200 rows with random-like valid data)
+    # 6. FILL REMAINING UP TO 200 ROWS
     for i in range(len(rows) + 1, 201):
         rows.append({
+            "customer_code": f"CUST-{1000+i}",
             "name": f"Random User {i}",
             "status": "pending",
-            "amount": i * 5,
-            "created_at": "2025-12-25"
+            "amount": i * 2,
+            "created_at": "2025-12-01"
         })
 
-    # Create directory if not exists
     os.makedirs("data", exist_ok=True)
-    
     df = pd.DataFrame(rows)
     output_path = "data/input_data.xlsx"
     df.to_excel(output_path, index=False)
-    print(f"SUCCESS: Test file generated at {output_path}")
+    print(f"SUCCESS: Test file generated with Customer Codes at {output_path}")
 
 if __name__ == "__main__":
     generate_test_excel()
