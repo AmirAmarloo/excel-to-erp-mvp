@@ -1,46 +1,38 @@
 from datetime import datetime
-import pytz
+import pandas as pd
 
 def validate_business_rules(rules, current_val, row):
     """
-    Validates direct rules from YAML like min_length, max_year, and allowed_values.
+    Evaluates complex business constraints defined in YAML.
+    Returns: (is_valid: bool, message: str)
     """
-    # 1. String Length Checks
-    if rules.get("type") == "string":
-        val_str = str(current_val)
-        if "min_length" in rules and len(val_str) < rules["min_length"]:
-            return False, f"Length less than {rules['min_length']}"
-        if "max_length" in rules and len(val_str) > rules["max_length"]:
-            return False, f"Length more than {rules['max_length']}"
+    
+    # --- 1. MINIMUM LENGTH CHECK ---
+    if "min_length" in rules and current_val is not None:
+        if len(str(current_val)) < rules["min_length"]:
+            return False, f"Value too short. Minimum length is {rules['min_length']}."
 
-    # 2. Allowed Values (Enum)
-    if "allowed_values" in rules:
-        allowed = [str(v).lower() for v in rules["allowed_values"]]
-        if str(current_val).lower() not in allowed:
-            return False, f"Value not in allowed list: {rules['allowed_values']}"
-
-    # 3. Date Range Checks
-    if rules.get("type") == "datetime" and isinstance(current_val, datetime):
-        min_y = rules.get("min_year")
-        max_y = datetime.now().year if rules.get("max_year") == "current" else rules.get("max_year")
+    # --- 2. DYNAMIC YEAR CHECK (max_year: current) ---
+    if "max_year" in rules and isinstance(current_val, datetime):
+        max_year_rule = rules["max_year"]
+        target_year = datetime.now().year if max_year_rule == "current" else max_year_rule
         
-        if min_y and current_val.year < min_y:
-            return False, f"Year earlier than {min_y}"
-        if max_y and current_val.year > max_y:
-            return False, f"Year later than {max_y}"
-        if rules.get("not_future"):
-            now = datetime.now(pytz.UTC)
-            val_utc = current_val if current_val.tzinfo else pytz.UTC.localize(current_val)
-            if val_utc > now:
-                return False, "Date is in the future"
+        if current_val.year > target_year:
+            return False, f"Year {current_val.year} exceeds the maximum allowed year ({target_year})."
 
-    # 4. Conditional Rules (Suspend Logic)
-    if "custom_rule" in rules:
-        c_rule = rules["custom_rule"]
-        if c_rule.get("type") == "conditional":
-            if str(row.get(c_rule["if_col"])).lower() == str(c_rule["equals"]).lower():
-                if float(current_val) != float(c_rule["then_value"]):
-                    return False, f"Amount must be {c_rule['then_value']} when {c_rule['if_col']} is {c_rule['equals']}"
+    # --- 3. CONDITIONAL RULES (e.g., Suspend Logic) ---
+    # Example: If status is 'suspend', the amount must be 0
+    if "conditional_rules" in rules:
+        for condition in rules["conditional_rules"]:
+            dependent_col = condition.get("if_col")
+            expected_val = condition.get("equals")
+            
+            # Check if the condition is met
+            actual_val = str(row.get(dependent_col)).strip().lower()
+            if actual_val == str(expected_val).lower():
+                # Apply the constraint (e.g., must_be: 0)
+                if "must_be" in condition:
+                    if str(current_val) != str(condition["must_be"]):
+                        return False, f"Constraint violation: {dependent_col} is {actual_val}, so this field must be {condition['must_be']}."
 
     return True, None
-# in VSCode

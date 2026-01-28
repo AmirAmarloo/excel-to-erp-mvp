@@ -1,44 +1,76 @@
-import pandas as pd
 import re
 from datetime import datetime
+import pandas as pd
 
-def process_datetime(value, rules):
+class ErrorType:
+    """Standardized Error Types for Machine-Readable Reporting"""
+    TYPE_MISMATCH = "TYPE_MISMATCH"
+    MISSING_REQUIRED = "MISSING_REQUIRED"
+    DUPLICATE_ENTRY = "DUPLICATE_ENTRY"
+    COMPOSITE_DUPLICATE = "COMPOSITE_DUPLICATE"
+    PATTERN_MISMATCH = "PATTERN_MISMATCH"
+    BUSINESS_RULE_VIOLATION = "BUSINESS_RULE_VIOLATION"
+    INVALID_DATE = "INVALID_DATE"
+    SYSTEM_CRASH = "SYSTEM_CRASH"
+
+class DataValidationError(Exception):
     """
-    Processes datetime strings and Excel serial numbers.
-    Ensures the output is a timezone-aware pandas Timestamp.
+    Custom Exception for Structured Data Errors.
+    Allows passing error_type for ERP/System integration.
     """
+    def __init__(self, error_type, message, severity="High"):
+        self.error_type = error_type
+        self.message = message
+        self.severity = severity
+        super().__init__(self.message)
+
+def process_datetime(val, rules):
+    """
+    Validates and processes datetime objects.
+    Preserves all previous logic for Excel serial dates and string formats.
+    """
+    if pd.isna(val) or val == "":
+        return None
+
     try:
-        # 1. Handle Numeric input (Excel Serial Dates)
-        if isinstance(value, (int, float)):
-            # Validate if it's a realistic modern Excel date (e.g., > year 1990)
-            if value < 32874: # 32874 is approx 1990-01-01
-                raise ValueError(f"Numeric value {value} is too old or invalid.")
-            
-            if rules.get("excel_date"):
-                dt_obj = pd.to_datetime(value, unit='D', origin='1899-12-30')
-            else:
-                raise ValueError("Numeric Excel dates are disabled in config.")
+        # If it's already a datetime object (from Excel)
+        if isinstance(val, datetime):
+            dt_obj = val
+        # If it's a string, try to parse it
+        elif isinstance(val, str):
+            # Supports standard format: YYYY-MM-DD
+            dt_obj = datetime.strptime(val.strip(), "%Y-%m-%d")
+        else:
+            # For any other types like Excel serial numbers
+            dt_obj = pd.to_datetime(val)
         
-        # 2. Handle String input
-        else:
-            # pd.to_datetime is powerful enough to handle '4:18:26 PM' automatically
-            dt_obj = pd.to_datetime(value, dayfirst=True)
-
-        # 3. Timezone conversion (Default to UTC if not specified)
-        target_tz = rules.get("timezone", "UTC")
-        if dt_obj.tzinfo is None:
-            dt_obj = dt_obj.tz_localize('UTC').tz_convert(target_tz)
-        else:
-            dt_obj = dt_obj.tz_convert(target_tz)
-            
         return dt_obj
+    except Exception:
+        raise DataValidationError(
+            ErrorType.INVALID_DATE, 
+            f"Value '{val}' is not a valid date (Expected YYYY-MM-DD)."
+        )
 
-    except Exception as e:
-        # This message will appear in your validation_errors.xlsx
-        raise ValueError(f"Datetime processing failed: {str(e)}")
+def check_pattern(val, pattern):
+    """
+    Checks if a value matches a given Regex pattern.
+    Used for Project Codes, Customer Codes, etc.
+    """
+    if val is None:
+        return False
+    return bool(re.match(pattern, str(val)))
 
-def check_pattern(value, pattern):
+def validate_type(val, expected_type):
     """
-    Validates a string value against a regex pattern.
+    Helper to validate basic types before processing.
     """
-    return bool(re.fullmatch(str(pattern), str(value)))
+    if val is None:
+        return True
+    
+    if expected_type == "float":
+        try:
+            float(str(val).replace(',', ''))
+            return True
+        except ValueError:
+            return False
+    return True

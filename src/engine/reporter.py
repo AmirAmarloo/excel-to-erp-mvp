@@ -1,46 +1,43 @@
 import pandas as pd
 import os
-from datetime import datetime
+import json
 
 def save_results(valid_rows, errors, output_dir, config):
-    """Generates Excel outputs and the Execution Summary Log."""
-    os.makedirs(output_dir, exist_ok=True)
+    """
+    Saves processed data and structured error logs.
+    Optimized for large-scale data reporting.
+    """
     
-    # Create DataFrame from valid rows
-    df_valid = pd.DataFrame(valid_rows)
-
-    # FIX: Remove timezone info before saving to Excel
-    for col in df_valid.select_dtypes(include=['datetimetz']):
-        df_valid[col] = df_valid[col].dt.tz_localize(None)
+    # 1. SAVE VALID DATA
+    valid_df = pd.DataFrame(valid_rows)
+    valid_file = os.path.join(output_dir, "cleaned_data.xlsx")
     
-    # Save Clean Data
-    df_valid.to_excel(os.path.join(output_dir, "cleaned_data.xlsx"), index=False)
+    if not valid_df.empty:
+        valid_df.to_excel(valid_file, index=False)
     
-    # Save Errors
+    # 2. SAVE STRUCTURED ERROR LOG (JSON for System Integration)
+    error_file_json = os.path.join(output_dir, "validation_errors.json")
+    with open(error_file_json, 'w', encoding='utf-8') as f:
+        json.dump(errors, f, indent=4, ensure_ascii=False)
+        
+    # 3. SAVE HUMAN-READABLE ERROR LOG (Excel)
+    error_file_excel = os.path.join(output_dir, "error_report.xlsx")
     if errors:
         error_df = pd.DataFrame(errors)
-        # Also clean timezones in errors if any exist there
-        for col in error_df.select_dtypes(include=['datetimetz']):
-            error_df[col] = error_df[col].dt.tz_localize(None)
-            
+        # Sort by Severity and Row Number for better readability
         error_df = error_df.sort_values(by=["Severity", "Row_Number"])
-        error_df.to_excel(os.path.join(output_dir, "validation_errors.xlsx"), index=False)
+        error_df.to_excel(error_file_excel, index=False)
+
+    # 4. GENERATE SUMMARY STATISTICS
+    total_errors = len(errors)
+    unique_error_types = set(e['Error_Type'] for e in errors) if errors else []
     
-    # Summary Report
-    total_processed = len(valid_rows) + len(set(e['Row_Number'] for e in errors))
-    health_score = (len(valid_rows) / total_processed) * 100 if total_processed > 0 else 0
+    summary = (
+        f"--- Execution Summary ---\n"
+        f"Clean Data Saved: {valid_file}\n"
+        f"Error Logs Saved: {error_file_json}\n"
+        f"Total Errors:     {total_errors}\n"
+        f"Error Categories: {list(unique_error_types)}\n"
+    )
     
-    log_content = f"""
-========================================
-📊 DATA VALIDATION LOG
-========================================
-Execution Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Source: {config['source']['file']}
-Valid Rows: {len(valid_rows)}
-Error Count: {len(errors)}
-Health Score: {health_score:.2f}%
-========================================
-"""
-    with open(os.path.join(output_dir, "execution_summary.txt"), "w", encoding="utf-8") as f:
-        f.write(log_content)
-    return log_content
+    return summary
