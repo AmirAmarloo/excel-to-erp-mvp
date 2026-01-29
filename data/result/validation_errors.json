@@ -5,7 +5,7 @@
         "Invalid_Value": "INVALID-123",
         "Error_Type": "PATTERN_MISMATCH",
         "Severity": 3,
-        "Error_Message": "Value 'INVALID-123' does not match required pattern."
+        "Error_Message": "Invalid pattern: INVALID-123"
     },
     {
         "Row_Number": 22,
@@ -13,7 +13,15 @@
         "Invalid_Value": NaN,
         "Error_Type": "MISSING_REQUIRED",
         "Severity": 1,
-        "Error_Message": "Field is mandatory but found empty."
+        "Error_Message": "Mandatory field is empty"
+    },
+    {
+        "Row_Number": 32,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "x",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Original row flagged: Conflict with row 33"
     },
     {
         "Row_Number": 33,
@@ -21,7 +29,7 @@
         "Invalid_Value": "X",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Composite key ('x', 'cust-2030') already exists."
+        "Error_Message": "Duplicate of row 32"
     },
     {
         "Row_Number": 42,
@@ -48,14 +56,6 @@
         "Error_Message": "Constraint: Since status is suspend, this must be None"
     },
     {
-        "Row_Number": 72,
-        "Column_Name": "created_at",
-        "Invalid_Value": "2029-05-05",
-        "Error_Type": "BUSINESS_RULE_VIOLATION",
-        "Severity": 3,
-        "Error_Message": "Future dates not allowed (2029)"
-    },
-    {
         "Row_Number": 202,
         "Column_Name": "name",
         "Invalid_Value": "German Tech GmbH 199 German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199",
@@ -69,15 +69,15 @@
         "Invalid_Value": NaN,
         "Error_Type": "MISSING_REQUIRED",
         "Severity": 2,
-        "Error_Message": "Field is mandatory but found empty."
+        "Error_Message": "Mandatory field is empty"
     },
     {
-        "Row_Number": 204,
-        "Column_Name": "created_at",
-        "Invalid_Value": 34,
-        "Error_Type": "BUSINESS_RULE_VIOLATION",
-        "Severity": 3,
-        "Error_Message": "Year 1970 is before allowed minimum 2000"
+        "Row_Number": 199,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "inv-3197",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Original row flagged: Conflict with row 205"
     },
     {
         "Row_Number": 205,
@@ -85,6 +85,6 @@
         "Invalid_Value": "INV-3197",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Composite key ('inv-3197', 'cust-2197') already exists."
+        "Error_Message": "Duplicate of row 199"
     }
 ]
