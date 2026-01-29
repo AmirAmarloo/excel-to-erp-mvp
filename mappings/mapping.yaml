@@ -1,5 +1,5 @@
 source:
-  file: "../data/input_data.xlsx"
+  file: "data/input_data.xlsx"
   sheet: "Sheet1"
 
 columns:

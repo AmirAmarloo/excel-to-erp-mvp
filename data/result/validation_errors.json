@@ -1,0 +1,51 @@
+[
+    {
+        "Row_Number": 32,
+        "Column_Name": "amount",
+        "Error_Type": "MISSING_REQUIRED",
+        "Severity": 2,
+        "Error_Message": "Field amount is mandatory."
+    },
+    {
+        "Row_Number": 33,
+        "Column_Name": "amount",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Invalid float format"
+    },
+    {
+        "Row_Number": 34,
+        "Column_Name": "project_code",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 3,
+        "Error_Message": "Format mismatch for project_code"
+    },
+    {
+        "Row_Number": 35,
+        "Column_Name": "name",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 2,
+        "Error_Message": "Value too short. Minimum length is 3."
+    },
+    {
+        "Row_Number": 38,
+        "Column_Name": "created_at",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 3,
+        "Error_Message": "Year 2027 exceeds the maximum allowed year (2026)."
+    },
+    {
+        "Row_Number": 41,
+        "Column_Name": "invoice_number",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Composite Duplicate found: ('inv-unique-1', 'cust-555')"
+    },
+    {
+        "Row_Number": 202,
+        "Column_Name": "invoice_number",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Composite Duplicate found: ('inv-1002', 'cust-202')"
+    }
+]
