@@ -1,51 +1,93 @@
 [
     {
-        "Row_Number": 32,
-        "Column_Name": "amount",
-        "Error_Type": "MISSING_REQUIRED",
-        "Severity": 2,
-        "Error_Message": "Field amount is mandatory."
-    },
-    {
-        "Row_Number": 33,
-        "Column_Name": "amount",
-        "Error_Type": "TYPE_MISMATCH",
-        "Severity": 2,
-        "Error_Message": "Invalid float format"
-    },
-    {
-        "Row_Number": 34,
+        "Row_Number": 12,
         "Column_Name": "project_code",
         "Error_Type": "PATTERN_MISMATCH",
         "Severity": 3,
         "Error_Message": "Format mismatch for project_code"
     },
     {
-        "Row_Number": 35,
+        "Row_Number": 22,
+        "Column_Name": "customer_code",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Format mismatch for customer_code"
+    },
+    {
+        "Row_Number": 22,
+        "Column_Name": "invoice_number",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 1,
+        "Error_Message": "Incomplete Composite Key"
+    },
+    {
+        "Row_Number": 33,
+        "Column_Name": "invoice_number",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Composite Duplicate found: ('x', 'cust-2030')"
+    },
+    {
+        "Row_Number": 42,
         "Column_Name": "name",
         "Error_Type": "BUSINESS_RULE_VIOLATION",
         "Severity": 2,
-        "Error_Message": "Value too short. Minimum length is 3."
+        "Error_Message": "Too short (Min: 3)"
     },
     {
-        "Row_Number": 38,
+        "Row_Number": 52,
+        "Column_Name": "status",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 2,
+        "Error_Message": "Invalid value. Must be one of: ['active', 'pending', 'closed', 'suspend']"
+    },
+    {
+        "Row_Number": 62,
+        "Column_Name": "amount",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 2,
+        "Error_Message": "Constraint: Since status is suspend, this must be None"
+    },
+    {
+        "Row_Number": 72,
         "Column_Name": "created_at",
         "Error_Type": "BUSINESS_RULE_VIOLATION",
         "Severity": 3,
-        "Error_Message": "Year 2027 exceeds the maximum allowed year (2026)."
+        "Error_Message": "Future dates not allowed (2029)"
     },
     {
-        "Row_Number": 41,
-        "Column_Name": "invoice_number",
-        "Error_Type": "COMPOSITE_DUPLICATE",
-        "Severity": 1,
-        "Error_Message": "Composite Duplicate found: ('inv-unique-1', 'cust-555')"
+        "Row_Number": 82,
+        "Column_Name": "amount",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Invalid float format"
     },
     {
         "Row_Number": 202,
+        "Column_Name": "name",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 2,
+        "Error_Message": "Too long (Max: 50)"
+    },
+    {
+        "Row_Number": 203,
+        "Column_Name": "name",
+        "Error_Type": "SYSTEM_CRASH",
+        "Severity": 1,
+        "Error_Message": "'float' object has no attribute 'lower'"
+    },
+    {
+        "Row_Number": 204,
+        "Column_Name": "created_at",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 3,
+        "Error_Message": "Year 1970 is before allowed minimum 2000"
+    },
+    {
+        "Row_Number": 205,
         "Column_Name": "invoice_number",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Composite Duplicate found: ('inv-1002', 'cust-202')"
+        "Error_Message": "Composite Duplicate found: ('inv-3197', 'cust-2197')"
     }
 ]
