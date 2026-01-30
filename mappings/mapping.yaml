@@ -1,5 +1,5 @@
 source:
-  file: "data/input_data.xlsx"
+  file: "data/input_data.csv"
   sheet: "Sheet1"
 
 columns:
@@ -71,3 +71,10 @@ columns:
     max_year: "current"
     not_future: true
     priority: 3
+  
+  email:
+    type: "email"
+    required: true
+    auto_clean: true
+    normalize: true
+    priority: 2

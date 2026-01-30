@@ -24,6 +24,9 @@ class DataValidationError(Exception):
         self.message = message
         self.severity = severity
         super().__init__(self.message)
+        
+# Standard Email Regex
+EMAIL_REGEX = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
 def process_datetime(val, rules):
     """
