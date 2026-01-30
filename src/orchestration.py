@@ -2,11 +2,19 @@ import warnings
 from datetime import datetime
 import pandas as pd
 from engine.loader import load_config, load_source_chunks, get_result_path
-from engine.validators import process_datetime, check_pattern, DataValidationError, ErrorType
+#from engine.validators import process_datetime, check_pattern, check_email_format, DataValidationError, ErrorType
+from engine.validators import (
+    process_datetime, 
+    check_pattern, 
+    DataValidationError, 
+    ErrorType, 
+    check_email_format
+)
 from engine.rules import validate_business_rules
 from engine.reporter import save_results
 
 # Suppress spreadsheet engine warnings
+# Light Version: In-memory buffering, single-run uniqueness
 warnings.filterwarnings("ignore", category=UserWarning)
 
 def run_pipeline(chunk_size=50000):
@@ -100,6 +108,13 @@ def run_pipeline(chunk_size=50000):
                     is_valid, msg = validate_business_rules(rules, current_val, row)
                     if not is_valid:
                         raise DataValidationError(ErrorType.BUSINESS_RULE_VIOLATION, msg)
+
+
+
+                    if rules.get("type") == "email" and not is_null:
+                                if not check_email_format(current_val):
+                                    raise DataValidationError(ErrorType.PATTERN_MISMATCH, "Invalid email format")
+
 
                     temp_processed_row[col_name] = current_val
 

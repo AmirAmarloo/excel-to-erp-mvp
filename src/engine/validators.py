@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 import pandas as pd
+from enum import Enum
 
 class ErrorType:
     """Standardized Error Types for Machine-Readable Reporting"""
@@ -74,3 +75,12 @@ def validate_type(val, expected_type):
         except ValueError:
             return False
     return True
+
+def check_email_format(email):
+    """
+    Standard Email Regex Validator
+    """
+    pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    if pd.isna(email) or str(email).strip() == "":
+        return True # Handled by 'required' rule elsewhere
+    return bool(re.match(pattern, str(email).strip()))
