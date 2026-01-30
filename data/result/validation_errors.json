@@ -1,14 +1,14 @@
 [
     {
-        "Row_Number": 12,
-        "Column_Name": "project_code",
-        "Invalid_Value": "INVALID-123",
-        "Error_Type": "PATTERN_MISMATCH",
-        "Severity": 3,
-        "Error_Message": "Invalid pattern: INVALID-123"
+        "Row_Number": 30,
+        "Column_Name": "name",
+        "Invalid_Value": "CompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompany 28",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 2,
+        "Error_Message": "Too long (Max: 50)"
     },
     {
-        "Row_Number": 22,
+        "Row_Number": 102,
         "Column_Name": "customer_code",
         "Invalid_Value": NaN,
         "Error_Type": "MISSING_REQUIRED",
@@ -16,75 +16,83 @@
         "Error_Message": "Mandatory field is empty"
     },
     {
-        "Row_Number": 32,
-        "Column_Name": "invoice_number",
-        "Invalid_Value": "x",
-        "Error_Type": "COMPOSITE_DUPLICATE",
-        "Severity": 1,
-        "Error_Message": "Original row flagged: Conflict with row 33"
+        "Row_Number": 202,
+        "Column_Name": "project_code",
+        "Invalid_Value": "WRONG-CODE",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 3,
+        "Error_Message": "Invalid pattern: WRONG-CODE"
     },
     {
-        "Row_Number": 33,
-        "Column_Name": "invoice_number",
-        "Invalid_Value": "X",
-        "Error_Type": "COMPOSITE_DUPLICATE",
-        "Severity": 1,
-        "Error_Message": "Duplicate of row 32"
-    },
-    {
-        "Row_Number": 42,
-        "Column_Name": "name",
-        "Invalid_Value": "Ab",
-        "Error_Type": "BUSINESS_RULE_VIOLATION",
-        "Severity": 2,
-        "Error_Message": "Too short (Min: 3)"
-    },
-    {
-        "Row_Number": 52,
-        "Column_Name": "status",
-        "Invalid_Value": "draft",
-        "Error_Type": "BUSINESS_RULE_VIOLATION",
-        "Severity": 2,
-        "Error_Message": "Invalid value. Must be one of: ['active', 'pending', 'closed', 'suspend']"
-    },
-    {
-        "Row_Number": 62,
+        "Row_Number": 302,
         "Column_Name": "amount",
-        "Invalid_Value": 10,
+        "Invalid_Value": "5000",
         "Error_Type": "BUSINESS_RULE_VIOLATION",
         "Severity": 2,
         "Error_Message": "Constraint: Since status is suspend, this must be None"
     },
     {
-        "Row_Number": 202,
-        "Column_Name": "name",
-        "Invalid_Value": "German Tech GmbH 199 German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199German Tech GmbH 199",
-        "Error_Type": "BUSINESS_RULE_VIOLATION",
-        "Severity": 2,
-        "Error_Message": "Too long (Max: 50)"
+        "Row_Number": 402,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-X",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-X"
     },
     {
-        "Row_Number": 203,
-        "Column_Name": "name",
-        "Invalid_Value": NaN,
-        "Error_Type": "MISSING_REQUIRED",
-        "Severity": 2,
-        "Error_Message": "Mandatory field is empty"
+        "Row_Number": 403,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-X",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-X"
     },
     {
-        "Row_Number": 199,
+        "Row_Number": 93,
         "Column_Name": "invoice_number",
-        "Invalid_Value": "inv-3197",
+        "Invalid_Value": "inv-91",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Original row flagged: Conflict with row 205"
+        "Error_Message": "Original row flagged: Conflict with row 447"
     },
     {
-        "Row_Number": 205,
+        "Row_Number": 447,
         "Column_Name": "invoice_number",
-        "Invalid_Value": "INV-3197",
+        "Invalid_Value": "INV-91",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Duplicate of row 199"
+        "Error_Message": "Duplicate of row 93"
+    },
+    {
+        "Row_Number": 503,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-Y",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-Y"
+    },
+    {
+        "Row_Number": 504,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-Y",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-Y"
+    },
+    {
+        "Row_Number": 505,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-Y",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-Y"
+    },
+    {
+        "Row_Number": 703,
+        "Column_Name": "email",
+        "Invalid_Value": "invalid_email.com",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Invalid email format"
     }
 ]
