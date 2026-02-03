@@ -1,5 +1,6 @@
 project_code,customer_code,invoice_number,email,name,status,amount,created_at
 PRJ-0,CUST-0,INV-0,user0@example.com,Company 0,active,100.0,2024-01-01
+PRJ-0,CUST-0,INV-0,user0@example.com,Company 0,active,100.0,2024-01-01
 PRJ-1,CUST-1,INV-1,user1@example.com,Company 1,active,100.0,2024-01-01
 PRJ-2,CUST-2,INV-2,user2@example.com,Company 2,active,100.0,2024-01-01
 PRJ-3,CUST-3,INV-3,user3@example.com,Company 3,active,100.0,2024-01-01
@@ -75000,3 +75001,5 @@ PRJ-74996,CUST-74996,INV-74996,user74996@example.com,Company 74996,active,100.0,
 PRJ-74997,CUST-74997,INV-74997,user74997@example.com,Company 74997,active,100.0,2024-01-01
 PRJ-74998,CUST-74998,INV-74998,user74998@example.com,Company 74998,active,100.0,2024-01-01
 PRJ-74999,CUST-74999,INV-74999,user74999@example.com,Company 74999,active,100.0,2024-01-01
+PRJ-74999,CUST-75000,INV-74999,user74999@example.com,Company df,active,df,2024-01-01
+PRJ-74999,CUST-75001,INV-74999,user74999@example.com,Company df,active,,2024-01-01

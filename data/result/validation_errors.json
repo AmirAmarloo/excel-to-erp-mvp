@@ -1,6 +1,22 @@
 [
     {
-        "Row_Number": 30,
+        "Row_Number": 2,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "inv-0",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Original row flagged: Conflict with row 3"
+    },
+    {
+        "Row_Number": 3,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "INV-0",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Duplicate of row 2"
+    },
+    {
+        "Row_Number": 31,
         "Column_Name": "name",
         "Invalid_Value": "CompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompany 28",
         "Error_Type": "BUSINESS_RULE_VIOLATION",
@@ -8,7 +24,7 @@
         "Error_Message": "Too long (Max: 50)"
     },
     {
-        "Row_Number": 102,
+        "Row_Number": 103,
         "Column_Name": "customer_code",
         "Invalid_Value": NaN,
         "Error_Type": "MISSING_REQUIRED",
@@ -16,7 +32,7 @@
         "Error_Message": "Mandatory field is empty"
     },
     {
-        "Row_Number": 202,
+        "Row_Number": 203,
         "Column_Name": "project_code",
         "Invalid_Value": "WRONG-CODE",
         "Error_Type": "PATTERN_MISMATCH",
@@ -24,20 +40,12 @@
         "Error_Message": "Invalid pattern: WRONG-CODE"
     },
     {
-        "Row_Number": 302,
+        "Row_Number": 303,
         "Column_Name": "amount",
         "Invalid_Value": "5000",
         "Error_Type": "BUSINESS_RULE_VIOLATION",
         "Severity": 2,
         "Error_Message": "Constraint: Since status is suspend, this must be None"
-    },
-    {
-        "Row_Number": 402,
-        "Column_Name": "customer_code",
-        "Invalid_Value": "CUST-X",
-        "Error_Type": "PATTERN_MISMATCH",
-        "Severity": 1,
-        "Error_Message": "Invalid pattern: CUST-X"
     },
     {
         "Row_Number": 403,
@@ -48,28 +56,28 @@
         "Error_Message": "Invalid pattern: CUST-X"
     },
     {
-        "Row_Number": 93,
+        "Row_Number": 404,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-X",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-X"
+    },
+    {
+        "Row_Number": 94,
         "Column_Name": "invoice_number",
         "Invalid_Value": "inv-91",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Original row flagged: Conflict with row 447"
+        "Error_Message": "Original row flagged: Conflict with row 448"
     },
     {
-        "Row_Number": 447,
+        "Row_Number": 448,
         "Column_Name": "invoice_number",
         "Invalid_Value": "INV-91",
         "Error_Type": "COMPOSITE_DUPLICATE",
         "Severity": 1,
-        "Error_Message": "Duplicate of row 93"
-    },
-    {
-        "Row_Number": 503,
-        "Column_Name": "customer_code",
-        "Invalid_Value": "CUST-Y",
-        "Error_Type": "PATTERN_MISMATCH",
-        "Severity": 1,
-        "Error_Message": "Invalid pattern: CUST-Y"
+        "Error_Message": "Duplicate of row 94"
     },
     {
         "Row_Number": 504,
@@ -88,11 +96,43 @@
         "Error_Message": "Invalid pattern: CUST-Y"
     },
     {
-        "Row_Number": 703,
+        "Row_Number": 506,
+        "Column_Name": "customer_code",
+        "Invalid_Value": "CUST-Y",
+        "Error_Type": "PATTERN_MISMATCH",
+        "Severity": 1,
+        "Error_Message": "Invalid pattern: CUST-Y"
+    },
+    {
+        "Row_Number": 704,
         "Column_Name": "email",
         "Invalid_Value": "invalid_email.com",
         "Error_Type": "PATTERN_MISMATCH",
         "Severity": 2,
-        "Error_Message": "Invalid email format"
+        "Error_Message": "Invalid email format: 'invalid_email.com'"
+    },
+    {
+        "Row_Number": 804,
+        "Column_Name": "amount",
+        "Invalid_Value": "TEXT_DATA",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Expected float but got: 'TEXT_DATA'"
+    },
+    {
+        "Row_Number": 75004,
+        "Column_Name": "amount",
+        "Invalid_Value": "df",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Expected float but got: 'df'"
+    },
+    {
+        "Row_Number": 75005,
+        "Column_Name": "amount",
+        "Invalid_Value": NaN,
+        "Error_Type": "MISSING_REQUIRED",
+        "Severity": 2,
+        "Error_Message": "Mandatory field is empty"
     }
 ]

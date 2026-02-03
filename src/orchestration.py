@@ -9,6 +9,7 @@ from engine.validators import (
     DataValidationError, 
     ErrorType, 
     check_email_format,
+    validate_type,
     EMAIL_REGEX
 )
 from engine.rules import validate_business_rules
@@ -117,6 +118,13 @@ def run_pipeline(chunk_size=50000):
                                 f"Invalid email format: '{current_val}'"
                             )
 
+                    target_type = rules.get("type")
+                    if target_type in ["float", "int"] and not is_null:
+                        if not validate_type(current_val, target_type):
+                            raise DataValidationError(
+                                ErrorType.TYPE_MISMATCH, 
+                                f"Expected {target_type} but got: '{current_val}'"
+                            )
                     #if rules.get("type") == "email" and not is_null:
                          #       if not check_email_format(current_val):
                               #      raise DataValidationError(ErrorType.PATTERN_MISMATCH, "Invalid email format")

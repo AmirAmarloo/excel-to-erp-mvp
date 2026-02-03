@@ -87,3 +87,26 @@ def check_email_format(email):
     if pd.isna(email) or str(email).strip() == "":
         return True # Handled by 'required' rule elsewhere
     return bool(re.match(pattern, str(email).strip()))
+
+def validate_type(val, expected_type):
+    """
+    General purpose type validator.
+    Supports: float, int, and basic numeric checks.
+    """
+    if val is None or str(val).strip() == "":
+        return True
+    
+    clean_val = str(val).replace(',', '').strip()
+    
+    try:
+        if expected_type == "float":
+            float(clean_val)
+            return True
+        elif expected_type == "int":
+            # Checks if it's a whole number
+            float(clean_val).is_integer()
+            return True
+        # Future-proofing: add other types here (like 'bool')
+    except (ValueError, TypeError):
+        return False
+    return True
