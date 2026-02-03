@@ -167,17 +167,25 @@ def run_pipeline(chunk_size=50000):
 
     # 2. EXPORT & FINAL SUMMARY
     result_dir = get_result_path(config)
-    summary = save_results(valid_rows, errors, result_dir, config)
-
+    #summary = save_results(valid_rows, errors, result_dir, config)
+    duration = datetime.now() - start_time
     # --- PROFESSIONAL CONSOLE OUTPUT ---
-    print("\n" + "="*60)
-    print(f"🚀 PIPELINE FINISHED")
-    print(f"📊 Rows Processed: {global_row_counter - 2}")
-    print(f"✅ Clean Records: {len(valid_rows)}")
-    print(f"❌ Error Entries:  {len(errors)}")
-    print(f"⏱️  Duration:       {datetime.now() - start_time}")
-    print("="*60)
-    print(summary)
+    summary_text = (
+        "\n" + "="*60 + "\n"
+        "🚀 PIPELINE FINISHED\n"
+        f"Execution Time: {datetime.now()}\n"
+        f"📊 Rows Processed: {global_row_counter - 2}\n"
+        f"✅ Clean Records: {len(valid_rows)}\n"
+        f"❌ Error Entries:  {len(errors)}\n"
+        f"⏱️  Duration:       {duration}\n"
+        + "="*60 + "\n"
+    )
+    # SUCCESS: Pass all 5 arguments to save_results (including execution_stats)
+    file_msg = save_results(valid_rows, errors, result_dir, config, summary_text)
+
+    # Print to console exactly what we built
+    print(summary_text)
+    print(file_msg)
 
 if __name__ == "__main__":
     run_pipeline()

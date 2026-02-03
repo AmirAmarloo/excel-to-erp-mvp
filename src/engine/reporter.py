@@ -2,42 +2,45 @@ import pandas as pd
 import os
 import json
 
-def save_results(valid_rows, errors, output_dir, config):
+def save_results(valid_rows, errors, result_dir, config, execution_stats):
     """
-    Saves processed data and structured error logs.
-    Optimized for large-scale data reporting.
+    Saves clean data to Excel and error logs to both Excel and JSON.
+    Also writes the exact console execution summary to a text file.
     """
+    # 1. Ensure the directory exists (Automatic Infrastructure)
+    if not os.path.exists(result_dir):
+        os.makedirs(result_dir, exist_ok=True)
+        print(f"📁 Created missing directory: {result_dir}")
+
+    # 2. Generate timestamps for unique filenames
+    #timestamp = pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
     
-    # 1. SAVE VALID DATA
+    #valid_file = os.path.join(result_dir, f"clean_data_{timestamp}.xlsx")
+    #error_file = os.path.join(result_dir, f"validation_errors_{timestamp}.xlsx")
+    #json_error_file = os.path.join(result_dir, f"validation_errors_{timestamp}.json")
+    #summary_file = os.path.join(result_dir, f"summary_execution_{timestamp}.txt")
+
+    valid_file = os.path.join(result_dir, f"clean_data.xlsx")
+    error_file = os.path.join(result_dir, f"validation_errors.xlsx")
+    json_error_file = os.path.join(result_dir, f"validation_errors.json")
+    summary_file = os.path.join(result_dir, f"summary_execution.txt")
+
+    # 3. Save Valid Records to Excel
     valid_df = pd.DataFrame(valid_rows)
-    valid_file = os.path.join(output_dir, "cleaned_data.xlsx")
-    
     if not valid_df.empty:
         valid_df.to_excel(valid_file, index=False)
     
-    # 2. SAVE STRUCTURED ERROR LOG (JSON for System Integration)
-    error_file_json = os.path.join(output_dir, "validation_errors.json")
-    with open(error_file_json, 'w', encoding='utf-8') as f:
-        json.dump(errors, f, indent=4, ensure_ascii=False)
+    # 4. Save Error Records (Excel & JSON)
+    error_df = pd.DataFrame(errors)
+    if not error_df.empty:
+        error_df.to_excel(error_file, index=False)
         
-    # 3. SAVE HUMAN-READABLE ERROR LOG (Excel)
-    error_file_excel = os.path.join(output_dir, "error_report.xlsx")
-    if errors:
-        error_df = pd.DataFrame(errors)
-        # Sort by Severity and Row Number for better readability
-        error_df = error_df.sort_values(by=["Severity", "Row_Number"])
-        error_df.to_excel(error_file_excel, index=False)
+        # Save JSON for ERP/System integration
+        with open(json_error_file, "w", encoding="utf-8") as f:
+            json.dump(errors, f, indent=4, default=str)
 
-    # 4. GENERATE SUMMARY STATISTICS
-    total_errors = len(errors)
-    unique_error_types = set(e['Error_Type'] for e in errors) if errors else []
-    
-    summary = (
-        f"--- Execution Summary ---\n"
-        f"Clean Data Saved: {valid_file}\n"
-        f"Error Logs Saved: {error_file_json}\n"
-        f"Total Errors:     {total_errors}\n"
-        f"Error Categories: {list(unique_error_types)}\n"
-    )
-    
-    return summary
+    # 5. Save the EXACT Console Summary to a text file (As requested)
+    with open(summary_file, "w", encoding="utf-8") as f:
+        f.write(execution_stats)
+
+    return f"✨ Reports successfully saved to: {result_dir}"
