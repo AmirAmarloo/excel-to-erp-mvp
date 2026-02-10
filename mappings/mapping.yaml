@@ -78,3 +78,10 @@ columns:
     auto_clean: true
     normalize: true
     priority: 2
+
+  branch:
+    type: float
+    required: true
+    min_value: 2200
+    max_value: 2999
+    priority: 2

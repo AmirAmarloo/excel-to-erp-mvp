@@ -36,24 +36,55 @@ def process_datetime(val, rules):
     if pd.isna(val) or val == "":
         return None
 
-    try:
+    #try:
         # If it's already a datetime object (from Excel)
-        if isinstance(val, datetime):
-            dt_obj = val
+     #   if isinstance(val, datetime):
+      #      dt_obj = val
         # If it's a string, try to parse it
-        elif isinstance(val, str):
+      #  elif isinstance(val, str):
             # Supports standard format: YYYY-MM-DD
-            dt_obj = datetime.strptime(val.strip(), "%Y-%m-%d")
-        else:
+      #      dt_obj = datetime.strptime(val.strip(), "%Y-%m-%d")
+      #  else:
             # For any other types like Excel serial numbers
+      #      dt_obj = pd.to_datetime(val)
+        
+       # return dt_obj
+    #except Exception:
+     #   raise DataValidationError(
+      #      ErrorType.INVALID_DATE, 
+       #     f"Value '{val}' is not a valid date (Expected YYYY-MM-DD)."
+       # )
+
+def process_datetime(val, rules):
+    """
+    Validates and processes datetime objects with smart parsing.
+    Supports YYYY-MM-DD, DD/MM/YYYY, and German DD.MM.YYYY formats.
+    """
+    if pd.isna(val) or str(val).strip() == "":
+        return None
+
+    try:
+        # 1. اگر از قبل شیء datetime است (مستقیم از اکسل)
+        if isinstance(val, (datetime, pd.Timestamp)):
+            dt_obj = val
+        
+        # 2. اگر رشته است، با استفاده از pandas آن را هوشمندانه پارس کن
+        elif isinstance(val, str):
+            # dayfirst=True باعث می‌شود در فرمت‌هایی مثل 01/02/2024، اولی را "روز" ببیند (استاندارد اروپا)
+            dt_obj = pd.to_datetime(val.strip(), dayfirst=True)
+            
+        # 3. برای سایر موارد (مثل اعداد سریال اکسل)
+        else:
             dt_obj = pd.to_datetime(val)
         
+        # خروجی نهایی را به صورت Timestamp برگردان (مناسب برای انتقال به PostgreSQL)
         return dt_obj
+
     except Exception:
         raise DataValidationError(
             ErrorType.INVALID_DATE, 
-            f"Value '{val}' is not a valid date (Expected YYYY-MM-DD)."
-        )
+            f"Value '{val}' is not a valid date. Please use YYYY-MM-DD or DD/MM/YYYY."
+        )       
 
 def check_pattern(val, pattern):
     """
@@ -88,25 +119,40 @@ def check_email_format(email):
         return True # Handled by 'required' rule elsewhere
     return bool(re.match(pattern, str(email).strip()))
 
-def validate_type(val, expected_type):
+def validate_numeric(val, rules):
     """
-    General purpose type validator.
-    Supports: float, int, and basic numeric checks.
+    Validates numeric types and enforces range constraints (min/max).
+    All internal comments are in English as requested.
     """
     if val is None or str(val).strip() == "":
         return True
     
+    # Remove commas and whitespace for clean conversion
     clean_val = str(val).replace(',', '').strip()
+    expected_type = rules.get('type')
+    min_val = rules.get('min_value')
+    max_val = rules.get('max_value')
     
     try:
-        if expected_type == "float":
-            float(clean_val)
-            return True
-        elif expected_type == "int":
-            # Checks if it's a whole number
-            float(clean_val).is_integer()
-            return True
-        # Future-proofing: add other types here (like 'bool')
+        num_val = float(clean_val)
+        
+        # Check if the value must be a whole number (Integer)
+        if expected_type == "int" and not num_val.is_integer():
+            return False
+            
+        # Enforce minimum value constraint from YAML
+        if min_val is not None:
+            if num_val < min_val:
+                return False 
+        
+        # Enforce maximum value constraint from YAML
+        if max_val is not None:
+            if num_val > max_val:
+                return False
+                
+        # If all checks pass, return True
+        return True
+        
     except (ValueError, TypeError):
+        # Return False if conversion to float fails
         return False
-    return True

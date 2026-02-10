@@ -16,6 +16,14 @@
         "Error_Message": "Duplicate of row 2"
     },
     {
+        "Row_Number": 12,
+        "Column_Name": "branch",
+        "Invalid_Value": NaN,
+        "Error_Type": "MISSING_REQUIRED",
+        "Severity": 2,
+        "Error_Message": "Mandatory field is empty"
+    },
+    {
         "Row_Number": 31,
         "Column_Name": "name",
         "Invalid_Value": "CompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompanyCompany 28",
@@ -118,6 +126,30 @@
         "Error_Type": "TYPE_MISMATCH",
         "Severity": 2,
         "Error_Message": "Expected float but got: 'TEXT_DATA'"
+    },
+    {
+        "Row_Number": 60753,
+        "Column_Name": "branch",
+        "Invalid_Value": "kj",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Expected float but got: 'kj'"
+    },
+    {
+        "Row_Number": 74904,
+        "Column_Name": "created_at",
+        "Invalid_Value": "1/91/2024",
+        "Error_Type": "INVALID_DATE",
+        "Severity": 3,
+        "Error_Message": "Value '1/91/2024' is not a valid date. Please use YYYY-MM-DD or DD/MM/YYYY."
+    },
+    {
+        "Row_Number": 74955,
+        "Column_Name": "branch",
+        "Invalid_Value": "ff",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Expected float but got: 'ff'"
     },
     {
         "Row_Number": 75004,

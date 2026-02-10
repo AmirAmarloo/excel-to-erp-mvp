@@ -1,9 +1,9 @@
 
 ============================================================
 🚀 PIPELINE FINISHED
-Execution Time: 2026-02-03 14:48:11.293641
+Execution Time: 2026-02-10 17:06:31.874778
 📊 Rows Processed: 75004
-✅ Clean Records: 74987
-❌ Error Entries:  17
-⏱️  Duration:       0:00:04.708476
+✅ Clean Records: 74983
+❌ Error Entries:  21
+⏱️  Duration:       0:00:17.956733
 ============================================================
