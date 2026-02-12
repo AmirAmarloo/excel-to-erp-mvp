@@ -10,6 +10,7 @@ from engine.validators import (
     ErrorType, 
     check_email_format,
     validate_type,
+    validate_numeric,
     EMAIL_REGEX
 )
 from engine.rules import validate_business_rules
@@ -119,15 +120,44 @@ def run_pipeline(chunk_size=50000):
                             )
 
                     target_type = rules.get("type")
+
+
                     if target_type in ["float", "int"] and not is_null:
-                        if not validate_type(current_val, target_type):
-                            raise DataValidationError(
-                                ErrorType.TYPE_MISMATCH, 
-                                f"Expected {target_type} but got: '{current_val}'"
-                            )
-                    #if rules.get("type") == "email" and not is_null:
-                         #       if not check_email_format(current_val):
-                              #      raise DataValidationError(ErrorType.PATTERN_MISMATCH, "Invalid email format")
+                                            # 1. First, check the TYPE
+                                            if not validate_type(current_val, target_type):
+                                                raise DataValidationError(
+                                                    ErrorType.TYPE_MISMATCH, 
+                                                    f"Expected {target_type} but got: '{current_val}'"
+                                                )
+                                            
+                                            # 2. Second, check the RANGE (Now using 'rules')
+
+                                            if not validate_numeric(current_val, rules):
+                                                min_v = rules.get('min_value')
+                                                max_v = rules.get('max_value')
+                                                
+                                                if min_v is not None and max_v is not None:
+                                                    error_msg = f"Value {current_val} must be between {min_v} and {max_v}"
+                                                elif min_v is not None:
+                                                    error_msg = f"Value {current_val} must be at least {min_v}"
+                                                elif max_v is not None:
+                                                    error_msg = f"Value {current_val} must be at most {max_v}"
+                                                else:
+                                                    error_msg = f"Value {current_val} is out of allowed range"
+
+                                                raise DataValidationError(
+                                                    ErrorType.BUSINESS_RULE_VIOLATION,
+                                                    f"{error_msg} for {col_name}"
+                                                )
+
+
+
+                    #if target_type in ["float", "int"] and not is_null:
+                    #    if not validate_type(current_val, target_type):
+                    #        raise DataValidationError(
+                    #            ErrorType.TYPE_MISMATCH, 
+                    #            f"Expected {target_type} but got: '{current_val}'"
+                    #        )
 
 
                     temp_processed_row[col_name] = current_val

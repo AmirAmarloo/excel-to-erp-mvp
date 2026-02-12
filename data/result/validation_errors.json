@@ -20,7 +20,7 @@
         "Column_Name": "branch",
         "Invalid_Value": NaN,
         "Error_Type": "MISSING_REQUIRED",
-        "Severity": 2,
+        "Severity": 3,
         "Error_Message": "Mandatory field is empty"
     },
     {
@@ -132,8 +132,16 @@
         "Column_Name": "branch",
         "Invalid_Value": "kj",
         "Error_Type": "TYPE_MISMATCH",
-        "Severity": 2,
+        "Severity": 3,
         "Error_Message": "Expected float but got: 'kj'"
+    },
+    {
+        "Row_Number": 60758,
+        "Column_Name": "branch",
+        "Invalid_Value": "5656565",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 3,
+        "Error_Message": "Value 5656565 must be between 1 and 2999 for branch"
     },
     {
         "Row_Number": 74904,
@@ -144,12 +152,28 @@
         "Error_Message": "Value '1/91/2024' is not a valid date. Please use YYYY-MM-DD or DD/MM/YYYY."
     },
     {
+        "Row_Number": 74905,
+        "Column_Name": "branch",
+        "Invalid_Value": "545454",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 3,
+        "Error_Message": "Value 545454 must be between 1 and 2999 for branch"
+    },
+    {
         "Row_Number": 74955,
         "Column_Name": "branch",
         "Invalid_Value": "ff",
         "Error_Type": "TYPE_MISMATCH",
-        "Severity": 2,
+        "Severity": 3,
         "Error_Message": "Expected float but got: 'ff'"
+    },
+    {
+        "Row_Number": 74966,
+        "Column_Name": "branch",
+        "Invalid_Value": "5251502525",
+        "Error_Type": "BUSINESS_RULE_VIOLATION",
+        "Severity": 3,
+        "Error_Message": "Value 5251502525 must be between 1 and 2999 for branch"
     },
     {
         "Row_Number": 75004,
@@ -166,5 +190,45 @@
         "Error_Type": "MISSING_REQUIRED",
         "Severity": 2,
         "Error_Message": "Mandatory field is empty"
+    },
+    {
+        "Row_Number": 435,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "inv-432",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Original row flagged: Conflict with row 75006"
+    },
+    {
+        "Row_Number": 75006,
+        "Column_Name": "invoice_number",
+        "Invalid_Value": "INV-432",
+        "Error_Type": "COMPOSITE_DUPLICATE",
+        "Severity": 1,
+        "Error_Message": "Duplicate of row 435"
+    },
+    {
+        "Row_Number": 75007,
+        "Column_Name": "status",
+        "Invalid_Value": NaN,
+        "Error_Type": "MISSING_REQUIRED",
+        "Severity": 2,
+        "Error_Message": "Mandatory field is empty"
+    },
+    {
+        "Row_Number": 75008,
+        "Column_Name": "status",
+        "Invalid_Value": NaN,
+        "Error_Type": "MISSING_REQUIRED",
+        "Severity": 2,
+        "Error_Message": "Mandatory field is empty"
+    },
+    {
+        "Row_Number": 75008,
+        "Column_Name": "amount",
+        "Invalid_Value": "\u0633\u06cc",
+        "Error_Type": "TYPE_MISMATCH",
+        "Severity": 2,
+        "Error_Message": "Expected float but got: '\u0633\u06cc'"
     }
 ]

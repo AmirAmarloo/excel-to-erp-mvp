@@ -120,39 +120,23 @@ def check_email_format(email):
     return bool(re.match(pattern, str(email).strip()))
 
 def validate_numeric(val, rules):
-    """
-    Validates numeric types and enforces range constraints (min/max).
-    All internal comments are in English as requested.
-    """
+    # If empty, range check is not applicable
     if val is None or str(val).strip() == "":
         return True
     
-    # Remove commas and whitespace for clean conversion
-    clean_val = str(val).replace(',', '').strip()
-    expected_type = rules.get('type')
-    min_val = rules.get('min_value')
-    max_val = rules.get('max_value')
-    
     try:
-        num_val = float(clean_val)
+        # Clean and convert to float for comparison
+        num_val = float(str(val).replace(',', '').strip())
         
-        # Check if the value must be a whole number (Integer)
-        if expected_type == "int" and not num_val.is_integer():
+        min_v = rules.get('min_value')
+        max_v = rules.get('max_value')
+
+        if min_v is not None and num_val < min_v:
+            return False
+        if max_v is not None and num_val > max_v:
             return False
             
-        # Enforce minimum value constraint from YAML
-        if min_val is not None:
-            if num_val < min_val:
-                return False 
-        
-        # Enforce maximum value constraint from YAML
-        if max_val is not None:
-            if num_val > max_val:
-                return False
-                
-        # If all checks pass, return True
         return True
-        
-    except (ValueError, TypeError):
-        # Return False if conversion to float fails
-        return False
+    except:
+        # If it's not a number, validate_type has already caught it
+        return True
